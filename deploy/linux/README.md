@@ -83,3 +83,28 @@ curl -sSI https://gst-dev.udaanhost.com/
 - Complete DB RLS cross-tenant tests, user/role privilege review, error/abuse protection, registration concurrency and retry tests.
 - Commit a reviewed API npm lockfile, run reproducible CI, implement staging backups, secret management and rollback.
 - Preserve `ENABLE_REGISTRATION=0` until gates pass; do not merge draft PR #2 or modify production invoicing site.
+
+
+### M2 browser portal development update (2026-11-02)
+
+A **separate, browser-native React portal** was added at `apps/portal/`; it is **not** the old root `dist/` build. See `apps/portal/README.md`.
+
+- Sign-in connects to `POST /api/v1/auth/login`.
+- Membership selection connects to `GET /api/v1/auth/tenants`.
+- Tenant-scoped company listing connects to `GET /api/v1/tenants/:tenantId/companies`.
+- Email registration/verification/resend screens exist but are **disabled by default** (`VITE_ENABLE_SIGNUP` unset / false and API `ENABLE_REGISTRATION=0`).
+- Frontend has no legacy Express `/api/bills`, `/api/lock`, or desktop launcher calls.
+- API requests are same-origin `/api/v1`. The running NestJS container is currently loopback-only; **proxy routing is not yet installed or tested**.
+- CI now includes a separate portal build/test job and corrects the previous duplicate workflow key.
+- This is a source-code update only. The staging webroot has **not** been switched to the new portal by this commit.
+
+Build the portal for preview (do not overwrite Plesk document root until verified):
+
+```bash
+cd /opt/gst-saas-dev/source
+git pull --ff-only
+docker run --rm -v "$PWD/apps/portal:/work" -w /work node:22-bookworm-slim \
+  sh -c 'npm install --no-audit --no-fund && npm run build && node --test tests/*.test.mjs'
+```
+
+This sample is for local staging development only and writes `node_modules` into the checkout. A reviewed lockfile and immutable build are required before public rollout. Do not expose a local file-based legacy Express API or enable customer sign-up during this stage.
