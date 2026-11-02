@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { ArrowRight, Building2, CheckCircle2, FileText, LockKeyhole, LogOut, Mail, ShieldCheck } from 'lucide-react';
 import { api } from './api.js';
+import BillingWorkspace from './BillingWorkspace.jsx';
 import './style.css';
 
 const signupEnabled = import.meta.env.VITE_ENABLE_SIGNUP === 'true';
@@ -20,6 +21,7 @@ function Portal() {
   const [memberships, setMemberships] = useState([]);
   const [companies, setCompanies] = useState([]);
   const [selected, setSelected] = useState(null);
+  const [activeCompany, setActiveCompany] = useState(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
@@ -47,7 +49,7 @@ function Portal() {
 
   function navigate(next) { setError(''); setNotice(''); setPage(next); }
   function resetSession() {
-    setToken(null); setPassword(''); setMemberships([]); setCompanies([]); setSelected(null); setEditing(null);
+    setToken(null); setPassword(''); setMemberships([]); setCompanies([]); setSelected(null); setEditing(null); setActiveCompany(null);
     navigate('login');
   }
 
@@ -67,7 +69,8 @@ function Portal() {
         const list = await api('/auth/tenants', { token: session.access_token });
         setToken(session.access_token);
         setMemberships(list);
-        setPage('workspaces');
+        if (list.length === 1) await openTenant(list[0], session.access_token);
+        else setPage('workspaces');
       } else if (action === 'register') {
         await api('/registrations', {
           method: 'POST',
@@ -87,16 +90,19 @@ function Portal() {
     finally { setBusy(false); }
   }
 
-  async function openTenant(workspace) {
-    if (!token) return resetSession();
+  async function openTenant(workspace, accessToken = token) {
+    if (!accessToken) return resetSession();
     setBusy(true); setError(''); setCompanies([]);
     try {
-      const result = await api('/tenants/' + encodeURIComponent(workspace.tenant_id) + '/companies', { token });
+      const result = await api('/tenants/' + encodeURIComponent(workspace.tenant_id) + '/companies', { token:accessToken });
       setCompanies(result);
       setSelected(workspace);
       setEditing(null);
+      setActiveCompany(result.length===1?result[0]:null);
       if (result.length === 1 && !result[0].onboarding_completed_at && ['owner','admin'].includes(workspace.role)) {
         editCompany(result[0]);
+      } else if (result.length === 1 && result[0].onboarding_completed_at) {
+        setPage('billing');
       } else {
         setPage('dashboard');
       }
@@ -141,7 +147,8 @@ function Portal() {
         { method: 'PATCH', token, body: payload });
       setCompanies(previous => previous.map(c => c.id === result.id ? result : c));
       setEditing(null);
-      setPage('dashboard');
+      setActiveCompany(result);
+      setPage('billing');
       setNotice('Company details saved successfully.');
     } catch (err) {
       setError(err.message);
@@ -150,14 +157,19 @@ function Portal() {
   }
 
   return <div className="shell">
+    {page==='billing' && token && selected && activeCompany ? <BillingWorkspace
+      token={token} tenant={selected} companies={companies} activeCompany={activeCompany}
+      onCompany={setActiveCompany} onSetup={editCompany}
+      onWorkspaces={()=>navigate('workspaces')} onSignOut={resetSession}/>
+    : <>
     <header className="topbar">
-      <div className="brand"><span className="brandicon"><FileText size={22}/></span> GST <strong>SaaS</strong><span className="staging">STAGING</span></div>
+      <div className="brand"><span className="brandicon"><FileText size={22}/></span><span className="brandtext"><strong>Anytime GST</strong><small>Your GST. Anytime. Anywhere.</small></span><span className="staging">STAGING</span></div>
       {token && <button type="button" className="textbtn" onClick={resetSession}><LogOut size={16}/> Sign out</button>}
     </header>
     <main className="main">
       <section className="intro">
         <span className="eyebrow"><ShieldCheck size={15}/> Secure cloud invoicing platform</span>
-        <h1>Business billing,<br/><em>made simpler.</em></h1>
+        <h1>Your GST.<br/><em>Anytime. Anywhere.</em></h1>
         <p>Organize your companies, manage GST invoicing and build smarter workflows in one place.</p>
         <div className="benefit"><CheckCircle2 size={18}/> Separate company workspaces</div>
         <div className="benefit"><CheckCircle2 size={18}/> GST-ready billing foundation</div>
@@ -168,13 +180,13 @@ function Portal() {
         {error && <div className="message error" role="alert">{error}</div>}
         {notice && <div className="message success" role="status">{notice}</div>}
         {page === 'login' && <>
-          <div className="panel-icon"><LockKeyhole/></div><h2>Welcome back</h2><p className="muted">Sign in to your GST SaaS workspace.</p>
+          <div className="panel-icon"><LockKeyhole/></div><h2>Welcome back</h2><p className="muted">Sign in to your Anytime GST workspace.</p>
           <form onSubmit={e => { e.preventDefault(); submit('login'); }}>
             <label>Email address<input type="email" required autoComplete="username" maxLength="254" value={email} onChange={e=>setEmail(e.target.value)} placeholder="you@company.com"/></label>
             <label>Password<input type="password" required autoComplete="current-password" value={password} onChange={e=>setPassword(e.target.value)} placeholder="Your password"/></label>
             <button className="primary" disabled={busy} type="submit">{busy ? 'Signing in…' : 'Sign in'} <ArrowRight size={18}/></button>
           </form>
-          {signupEnabled ? <p className="foot">New to GST SaaS? <button className="link" onClick={()=>navigate('register')}>Create an account</button></p>
+          {signupEnabled ? <p className="foot">New to Anytime GST? <button className="link" onClick={()=>navigate('register')}>Create an account</button></p>
             : <p className="foot">New account registration is disabled during staging security validation.</p>}
         </>}
         {page === 'register' && signupEnabled && <>
@@ -250,12 +262,14 @@ function Portal() {
                 Complete / edit company setup
               </button>}
           </div>) : <div className="empty">No company records returned.</div>}
-          <p className="muted note">Invoice creation and subscription administration are not available in this development preview.</p>
+          <p className="muted note">After company setup, open your Anytime GST dashboard to review your business. Billing operations are being migrated from the original application.</p>
+          {companies.map(c=><button key={c.id} type="button" className="primary" onClick={()=>{setActiveCompany(c);setPage('billing');}}>Open {c.legal_name} Dashboard <ArrowRight size={18}/></button>)}
           <button type="button" className="secondary" onClick={()=>navigate('workspaces')}>Change workspace</button>
         </>}
       </section>
     </main>
-    <footer>GST SaaS • Development environment • No live invoices or payments</footer>
+    <footer>Anytime GST • Your GST. Anytime. Anywhere. • Staging — no live invoices or payments</footer>
+    </>}
   </div>;
 }
 
