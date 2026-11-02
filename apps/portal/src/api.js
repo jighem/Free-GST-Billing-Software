@@ -1,9 +1,9 @@
 // Separate frontend and backend hosts are supported for staging.
- // Build with VITE_API_BASE_URL=https://gst-api-dev.udaanhost.com/api/v1
+ // Build with VITE_API_BASE_URL=https://staging-api.anytimegst.com/api/v1
  // Omit it for same-origin reverse proxy environments.
 const configured = import.meta.env?.VITE_API_BASE_URL;
 const PREFIX = configured ? (configured.endsWith('/') ? configured.slice(0, -1) : configured) : '/api/v1';
-if (configured && PREFIX !== 'https://gst-api-dev.udaanhost.com/api/v1') {
+if (configured && PREFIX !== 'https://staging-api.anytimegst.com/api/v1') {
   throw new Error('Unapproved API origin for this staging build');
 }
 export class ApiError extends Error {
