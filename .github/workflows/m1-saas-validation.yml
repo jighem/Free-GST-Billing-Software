@@ -117,7 +117,7 @@ jobs:
       - run: npm install --no-audit --no-fund
       - name: Build portal for dedicated staging API domain
         env:
-          VITE_API_BASE_URL: https://gst-api-dev.udaanhost.com/api/v1
+          VITE_API_BASE_URL: https://staging-api.anytimegst.com/api/v1
         run: npm run build
       - run: node --test tests/*.test.mjs
       - name: Package browser portal for Plesk upload
