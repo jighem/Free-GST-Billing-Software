@@ -11,6 +11,12 @@ export class RegistrationController {
     return this.service.request(input, ip);
   }
 
+  @Post('resend')
+  @HttpCode(202)
+  resend(@Body() body: { email?: unknown }, @Ip() ip: string) {
+    return this.service.resend(body?.email, ip);
+  }
+
   @Post('verify')
   @HttpCode(200)
   verify(@Body() body: { token?: unknown }) {
