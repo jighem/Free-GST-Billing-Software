@@ -80,6 +80,15 @@ BAD_STATUS="$(curl -sS -o /dev/null -w '%{http_code}' \
  "http://127.0.0.1:$API_PORT/api/v1/tenants/11111111-1111-4111-8111-111111111111/companies/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa/dashboard")"
 [ "$BAD_STATUS" = 401 ] || { echo "Unexpected unauthenticated dashboard HTTP $BAD_STATUS"; exit 1; }
 
+echo '=== AUTHENTICATED TEST A/B ISOLATION ON LOCAL CANDIDATE ==='
+PRIVATE=/root/gst-saas-secrets/anytimegst-test-users
+[ -r "$PRIVATE/test-users.txt" ] || { echo 'Private test credentials missing'; exit 1; }
+docker run --rm -i --network host --read-only --cap-drop ALL \
+  --security-opt no-new-privileges:true \
+  -v "$PRIVATE:/private:ro" \
+  node:22-bookworm-slim node --input-type=module - \
+  < "$SRC/deploy/linux/test-m3-tenant-dashboard.mjs"
+
 echo '=== BUILD VERSIONED REACT PORTAL ==='
 docker run --rm -v "$SRC:/workspace" -w /workspace/apps/portal \
   -e VITE_API_BASE_URL=https://staging-api.anytimegst.com/api/v1 \
