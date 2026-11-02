@@ -28,6 +28,18 @@ INSERT INTO tenant_memberships(tenant_id,user_id,role)
 SELECT '33333333-3333-4333-8333-333333333333',id,'owner' FROM owner;
 INSERT INTO companies(tenant_id,legal_name)
 VALUES('33333333-3333-4333-8333-333333333333','CI Onboarding Company');
+-- Validate the durable mail queue and least-privilege role against a disposable row.
+INSERT INTO registration_requests(email,password_hash,company_legal_name,requested_slug,verification_token_hash,expires_at)
+VALUES('mail-ci@example.invalid','not-a-real-password','Mail CI Company','mail-ci','0000000000000000000000000000000000000000000000000000000000000000',now()+interval '30 minutes');
+INSERT INTO registration_mail_outbox(registration_id,recipient_email,payload_ciphertext)
+SELECT id,'mail-ci@example.invalid','synthetic-encrypted-payload'
+FROM registration_requests WHERE email='mail-ci@example.invalid';
+DO $
+DECLARE jobs integer;
+BEGIN
+ SELECT count(*) INTO jobs FROM registration_mail_outbox WHERE sent_at IS NULL;
+ IF jobs <> 1 THEN RAISE EXCEPTION 'CI outbox must have one job'; END IF;
+END $;
 COMMIT;
 RESET ROLE;
 
