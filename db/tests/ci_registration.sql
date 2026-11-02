@@ -34,12 +34,9 @@ VALUES('mail-ci@example.invalid','not-a-real-password','Mail CI Company','mail-c
 INSERT INTO registration_mail_outbox(registration_id,recipient_email,payload_ciphertext)
 SELECT id,'mail-ci@example.invalid','synthetic-encrypted-payload'
 FROM registration_requests WHERE email='mail-ci@example.invalid';
-DO $
-DECLARE jobs integer;
-BEGIN
- SELECT count(*) INTO jobs FROM registration_mail_outbox WHERE sent_at IS NULL;
- IF jobs <> 1 THEN RAISE EXCEPTION 'CI outbox must have one job'; END IF;
-END $;
+-- Fail loudly if the outbox fixture was not created, without PL/pgSQL quoting.
+SELECT 1 / (CASE WHEN count(*) = 1 THEN 1 ELSE 0 END) AS outbox_fixture_valid
+FROM registration_mail_outbox WHERE sent_at IS NULL;
 COMMIT;
 RESET ROLE;
 
