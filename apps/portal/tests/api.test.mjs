@@ -28,3 +28,10 @@ test('blocks unusable HTML responses from masquerading as JSON', async () => {
   globalThis.fetch = async () => ({ ok: true, status: 200, json: async () => { throw new Error('HTML'); } });
   await assert.rejects(api('/auth/login'), err => err.message.includes('unexpected response'));
 });
+
+test('network failure returns a safe connection message', async () => {
+  globalThis.fetch = async () => { throw new Error('internal network hostname is private'); };
+  await assert.rejects(api('/auth/tenants'), err =>
+    err.status === 0 && err.message.includes('connection unavailable') &&
+    !err.message.includes('internal network hostname'));
+});
