@@ -27,7 +27,7 @@ export function validateCompanySetup(input: unknown): CompanySetup {
     throw new BadRequestException('Invalid company details');
   const data = input as Record<string, unknown>;
   const fields = ['legalName','tradeName','gstin','stateCode','billingEmail'] as const;
-  if (Object.keys(data).some(key => ![...fields,'billingAddress'].includes(key)))
+  if (Object.keys(data).some(key => !new Set<string>([...fields,'billingAddress']).has(key)))
     throw new BadRequestException('Unsupported company details');
   function text(field: typeof fields[number], max: number, required = false): string | null {
     const value = data[field];
