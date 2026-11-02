@@ -2,3 +2,58 @@
 .panel select{border:1px solid #dce3ed;border-radius:10px;padding:13px 14px;color:#1d2b43;outline:none;width:100%;background:#fbfdff}
 .panel select:focus{border-color:#2b6bed;box-shadow:0 0 0 3px #e7efff}
 .setup-link{text-align:left;margin-top:6px;font-size:13px}
+
+/* Anytime GST — reuse the forked app's left navigation, dashboard cards and
+   modular business workspace layout without exposing its legacy file APIs. */
+.brandtext{display:flex;flex-direction:column;gap:1px;letter-spacing:normal}
+.brandtext strong{font-size:20px;line-height:1.1}
+.brandtext small{font-size:10px;color:#62728a;font-weight:600}
+.billing-shell{display:flex;min-height:100vh;background:#f0f2f5;color:#132238}
+.billing-sidebar{width:256px;background:#fff;border-right:1px solid #e0e7f0;display:flex;flex-direction:column;flex-shrink:0;min-height:100vh}
+.billing-brand{display:flex;align-items:center;gap:11px;padding:23px 17px;border-bottom:1px solid #edf1f6}
+.billing-brand strong{display:block;font-size:18px;line-height:1.15;white-space:nowrap}
+.billing-brand small{display:block;color:#718198;font-size:10px;margin-top:4px;white-space:nowrap}
+.billing-mark{background:#2563eb;color:white;padding:11px;border-radius:12px;display:flex}
+.billing-company-picker{padding:20px 17px 15px;border-bottom:1px solid #edf1f6}
+.billing-company-picker small{font-size:10px;font-weight:800;color:#697b98;letter-spacing:1px}
+.billing-company-picker select{display:block;margin:8px 0 6px;width:100%;padding:10px;border:1px solid #dce5ef;border-radius:9px;background:#f8fafc;color:#15253d;font-size:13px}
+.billing-company-picker span{font-size:11px;color:#718198}
+.billing-nav{display:flex;flex-direction:column;padding:14px 10px;gap:4px}
+.billing-nav button,.billing-side-bottom button{border:0;background:transparent;width:100%;border-radius:9px;text-align:left;display:flex;align-items:center;gap:13px;color:#40516a;padding:12px 13px;font-weight:650;font-size:13px}
+.billing-nav button.active{background:#eaf1ff;color:#215cd0}
+.billing-nav button:disabled{opacity:.48;cursor:not-allowed}
+.billing-nav button small{font-size:9px;margin-left:auto;font-weight:800;letter-spacing:.6px}
+.billing-side-bottom{margin-top:auto;border-top:1px solid #edf1f6;padding:13px 10px}
+.billing-side-bottom button:hover,.billing-nav button:not(:disabled):hover{background:#edf3ff}
+.billing-content{min-width:0;flex:1}
+.billing-topbar{padding:24px 32px;background:#fff;border-bottom:1px solid #e2e7ef;display:flex;align-items:center;justify-content:space-between;gap:15px}
+.billing-topbar h1{font-size:23px;margin:3px 0 0;letter-spacing:-.6px}
+.billing-crumb{font-size:12px;color:#7787a0}
+.billing-chip{display:flex;align-items:center;gap:6px;border-radius:99px;background:#eaf1ff;color:#2457a7;padding:9px 12px;font-size:11px;font-weight:800;text-transform:uppercase}
+.billing-main{padding:30px 32px;max-width:1400px;margin:0 auto}
+.billing-welcome{display:flex;justify-content:space-between;align-items:center;gap:20px;margin-bottom:26px}
+.billing-welcome h2{font-size:26px;letter-spacing:-.6px;margin:0 0 5px}
+.billing-welcome p,.billing-muted{font-size:13px;color:#73819a;margin:0}
+.billing-metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:15px;margin-bottom:22px}
+.billing-metric,.billing-widget{background:white;border:1px solid #e2e7ef;border-radius:13px;box-shadow:0 2px 18px #172f4510}
+.billing-metric{padding:22px}
+.billing-metric-label{display:flex;justify-content:space-between;align-items:center;color:#667891;font-size:12px;font-weight:700}
+.billing-metric-label svg{color:#285fe0}
+.billing-metric strong{display:block;font-size:32px;margin:14px 0 10px}
+.billing-metric small{font-size:10px;color:#8290a5}
+.billing-grid{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:20px}
+.billing-widget{padding:23px}
+.billing-widget-header{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #eff2f6;padding-bottom:15px;color:#4c6487}
+.billing-widget-header h3{color:#182943;font-size:16px;margin:0}
+.billing-empty{display:flex;align-items:center;justify-content:center;flex-direction:column;text-align:center;padding:52px 15px;gap:13px;color:#7b8ba3;font-size:13px}
+.billing-empty svg{color:#a4b4ce}
+.billing-empty strong{color:#425774;font-size:15px}
+.billing-empty span{max-width:370px;line-height:1.6}
+.billing-details{margin:5px 0 20px}
+.billing-details div{padding:12px 0;border-bottom:1px solid #f0f3f7}
+.billing-details dt{font-size:11px;color:#8190a6;margin-bottom:5px}
+.billing-details dd{font-size:13px;color:#23334b;font-weight:650;margin:0;overflow-wrap:anywhere}
+.billing-settings-button{border:1px solid #d4e0f3;border-radius:9px;background:#fff;color:#2258c8;font-weight:700;padding:10px 14px;display:flex;gap:9px;align-items:center}
+.billing-preview-notice{background:#fff7e5;border:1px solid #f6dda9;color:#83602e;border-radius:10px;padding:13px 18px;font-size:12px;margin-top:23px;line-height:1.65}
+@media(max-width:1050px){.billing-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.billing-grid{grid-template-columns:1fr}}
+@media(max-width:700px){.billing-shell{flex-direction:column}.billing-sidebar{min-height:auto;width:100%;border-right:0;border-bottom:1px solid #e2e7ef}.billing-brand{padding:13px 18px}.billing-company-picker{padding:12px 18px}.billing-nav{flex-direction:row;overflow:auto;padding:8px}.billing-nav button{width:auto;flex-shrink:0;white-space:nowrap}.billing-side-bottom{display:flex;flex-wrap:wrap}.billing-side-bottom button{width:auto}.billing-topbar{padding:18px}.billing-main{padding:20px 15px}.billing-welcome{display:block}.billing-muted{display:block;margin-top:10px}.billing-metrics{gap:10px}.billing-metric{padding:15px}.billing-metric strong{font-size:25px}}
