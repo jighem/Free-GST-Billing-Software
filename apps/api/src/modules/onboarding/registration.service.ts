@@ -54,7 +54,8 @@ export class RegistrationService implements OnModuleDestroy {
        VALUES ($1,$2,$3)
        ON CONFLICT(registration_id) DO UPDATE SET
          recipient_email=excluded.recipient_email, payload_ciphertext=excluded.payload_ciphertext,
-         available_at=now(), attempts=0, locked_until=NULL, sent_at=NULL, last_error_code=NULL`,
+         available_at=now(), attempts=0, locked_until=NULL, sent_at=NULL, last_error_code=NULL,
+         delivery_version=registration_mail_outbox.delivery_version+1`,
       [id, email, encryptVerificationLink(url.toString())]);
   }
 
