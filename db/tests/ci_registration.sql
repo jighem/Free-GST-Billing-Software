@@ -1,9 +1,9 @@
--- Disposable CI PostgreSQL only. Validate least-privilege provisioning and RLS.
+-- Synthetic disposable CI fixture only.
 \set ON_ERROR_STOP on
 CREATE ROLE gst_registration LOGIN NOSUPERUSER NOBYPASSRLS NOINHERIT;
 GRANT USAGE ON SCHEMA public TO gst_registration;
-GRANT SELECT, INSERT, UPDATE ON registration_requests, registration_rate_limits TO gst_registration;
-GRANT SELECT (email, id), INSERT (email,password_hash) ON users TO gst_registration;
+GRANT SELECT,INSERT,UPDATE ON registration_requests,registration_rate_limits,registration_mail_outbox TO gst_registration;
+GRANT SELECT (email,id), INSERT (email,password_hash) ON users TO gst_registration;
 GRANT SELECT (slug) ON tenants TO gst_registration;
 GRANT INSERT (id,slug,display_name) ON tenants TO gst_registration;
 GRANT INSERT (tenant_id,user_id,role) ON tenant_memberships TO gst_registration;
@@ -31,11 +31,13 @@ VALUES('33333333-3333-4333-8333-333333333333','CI Onboarding Company');
 COMMIT;
 RESET ROLE;
 
--- Explicit test: runtime gst_app cannot read platform registration secrets.
 DO $$
 BEGIN
  IF has_table_privilege('gst_app','registration_requests','SELECT') THEN
   RAISE EXCEPTION 'gst_app must not see registration requests';
+ END IF;
+ IF has_table_privilege('gst_app','registration_mail_outbox','SELECT') THEN
+  RAISE EXCEPTION 'gst_app must not see mail outbox';
  END IF;
  IF has_table_privilege('gst_app','users','SELECT') THEN
   RAISE EXCEPTION 'gst_app must not see identity users';
