@@ -33,7 +33,7 @@ echo "=== GENERATE AND INSERT SYNTHETIC TEST ACCOUNTS ==="
 # The node process writes the passwords directly to a protected folder.
 # Only SQL with scrypt password hashes is piped to PostgreSQL; never print passwords.
 docker run --rm -i --network none --read-only --cap-drop ALL \
-  -v "$PRIVATE:/private:Z" node:22-bookworm-slim node - < "$SOURCE" \
+  -v "$PRIVATE:/private:Z" node:22-bookworm-slim node --input-type=module - < "$SOURCE" \
   | docker exec -i "$DB_CONTAINER" psql -U postgres -d "$DB_NAME" -v ON_ERROR_STOP=1
 
 echo "=== VERIFY TEST COMPANY COUNTS ==="
