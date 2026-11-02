@@ -15,6 +15,13 @@ async function bootstrap(): Promise<void> {
   }
   const port = Number(process.env.API_PORT || 4100);
   if (!Number.isInteger(port) || port < 1 || port > 65535) throw new Error('Invalid API_PORT');
-  await app.listen(port, '127.0.0.1');
+  // Private by default. Container network access is an explicit staging opt-in
+  // and must be paired with a loopback-only host port binding and Plesk proxy.
+  const bindHost = process.env.API_BIND_HOST || '127.0.0.1';
+  if (bindHost !== '127.0.0.1' &&
+      !(bindHost === '0.0.0.0' && process.env.ALLOW_CONTAINER_BIND === '1')) {
+    throw new Error('Refusing API_BIND_HOST without explicit container bind opt-in');
+  }
+  await app.listen(port, bindHost);
 }
 bootstrap().catch(error => { console.error(error); process.exitCode = 1; });
