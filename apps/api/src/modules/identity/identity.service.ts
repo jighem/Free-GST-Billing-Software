@@ -38,10 +38,13 @@ export class IdentityService {
   }
 
   async memberships(userId: string): Promise<Membership[]> {
-    return this.db.identityQuery<Membership>(
-      `SELECT m.tenant_id, m.role, t.display_name
-       FROM tenant_memberships m JOIN tenants t ON t.id=m.tenant_id
-       WHERE m.user_id=$1 AND t.status='active' ORDER BY t.display_name`, [userId]);
+    return this.db.withAuthenticatedUser(userId, async client => {
+      const result = await client.query<Membership>(
+        `SELECT m.tenant_id, m.role, t.display_name
+         FROM tenant_memberships m JOIN tenants t ON t.id=m.tenant_id
+         WHERE m.user_id=$1 AND t.status='active' ORDER BY t.display_name`, [userId]);
+      return result.rows;
+    });
   }
 
   async requireMember(userId: string, tenantId: string) {
