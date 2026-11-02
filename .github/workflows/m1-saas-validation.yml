@@ -76,6 +76,7 @@ jobs:
           psql -v ON_ERROR_STOP=1 -f db/migrations/0001_saas_foundation.sql
           psql -v ON_ERROR_STOP=1 -f db/migrations/0002_identity_sessions.sql
           psql -v ON_ERROR_STOP=1 -f db/migrations/0003_subscription_catalog.sql
+          psql -v ON_ERROR_STOP=1 -f db/migrations/0004_registration_onboarding.sql
           psql -v ON_ERROR_STOP=1 -f db/tests/ci_seed.sql
       - name: Verify isolated tenant reads under restricted role
         working-directory: apps/api
