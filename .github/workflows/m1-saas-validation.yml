@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - 'apps/api/**'
+      - 'apps/portal/**'
       - 'db/**'
       - 'src/**'
       - 'server.js'
@@ -71,8 +72,8 @@ jobs:
       - run: npm run build
         working-directory: apps/api
       - run: node --test tests/registration-policy.test.mjs
-      - run: node --test tests/mail-crypto.test.mjs
         working-directory: apps/api
+      - run: node --test tests/mail-crypto.test.mjs
         working-directory: apps/api
       - name: Apply migrations and seed disposable CI database
         run: |
@@ -100,3 +101,19 @@ jobs:
           path: apps/api/package-lock.json
           if-no-files-found: ignore
           retention-days: 7
+
+  saas-portal-build:
+    name: Standalone SaaS portal build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: apps/portal
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-audit --no-fund
+      - run: npm run build
+      - run: node --test tests/*.test.mjs
