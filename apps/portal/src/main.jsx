@@ -95,7 +95,11 @@ function Portal() {
       setCompanies(result);
       setSelected(workspace);
       setEditing(null);
-      setPage('dashboard');
+      if (result.length === 1 && !result[0].onboarding_completed_at && ['owner','admin'].includes(workspace.role)) {
+        editCompany(result[0]);
+      } else {
+        setPage('dashboard');
+      }
     } catch (err) {
       setError(err.message);
       if (err.status === 401) resetSession();
