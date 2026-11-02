@@ -98,11 +98,12 @@ BEGIN
   LOOP
     EXECUTE format('ALTER TABLE %I ENABLE ROW LEVEL SECURITY', t);
     EXECUTE format('ALTER TABLE %I FORCE ROW LEVEL SECURITY', t);
-    EXECUTE format(
-      'CREATE POLICY tenant_scope ON %I FOR ALL USING (id = nullif(current_setting(''app.tenant_id'', true), '''')::uuid) WITH CHECK (id = nullif(current_setting(''app.tenant_id'', true), '''')::uuid)',
-      t
-    ) WHERE t = 'tenants';
-    IF t <> 'tenants' THEN
+    IF t = 'tenants' THEN
+      EXECUTE format(
+        'CREATE POLICY tenant_scope ON %I FOR ALL USING (id = nullif(current_setting(''app.tenant_id'', true), '''')::uuid) WITH CHECK (id = nullif(current_setting(''app.tenant_id'', true), '''')::uuid)',
+        t
+      );
+    ELSE
       EXECUTE format(
         'CREATE POLICY tenant_scope ON %I FOR ALL USING (tenant_id = nullif(current_setting(''app.tenant_id'', true), '''')::uuid) WITH CHECK (tenant_id = nullif(current_setting(''app.tenant_id'', true), '''')::uuid)',
         t
