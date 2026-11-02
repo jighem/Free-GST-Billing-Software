@@ -11,7 +11,7 @@ const accounts = [
 ];
 
 function sqlLiteral(value) {
-  if (!/^[A-Za-z0-9@._$-]+$/.test(value)) throw new Error('Unexpected SQL fixture value');
+  if (!/^[A-Za-z0-9@._$ -]+$/.test(value)) throw new Error('Unexpected SQL fixture value');
   return "'" + value + "'";
 }
 const values = accounts.map(item => {
