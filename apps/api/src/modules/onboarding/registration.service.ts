@@ -1,4 +1,4 @@
-import { ConflictException, Injectable, ServiceUnavailableException } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, OnModuleDestroy, ServiceUnavailableException } from '@nestjs/common';
 import { createHash, createHmac, randomBytes, randomUUID } from 'node:crypto';
 import { Pool } from 'pg';
 import { createTransport } from 'nodemailer';
@@ -8,7 +8,7 @@ import { hashPassword } from '../identity/password';
 // Uses a dedicated, least-privileged registration role. Neither gst_auth nor
 // gst_app may insert tenants, users or tenant memberships.
 @Injectable()
-export class RegistrationService {
+export class RegistrationService implements OnModuleDestroy {
   private readonly pool: Pool;
   constructor() {
     if (!process.env.REGISTRATION_DATABASE_URL) throw Error('Missing REGISTRATION_DATABASE_URL');
@@ -21,7 +21,9 @@ export class RegistrationService {
   }
 
   async request(input: unknown, ip: string): Promise<{ message: string }> {
-    const draft = normalizeRegistration(input);
+    let draft: ReturnType<typeof normalizeRegistration>;
+    try { draft = normalizeRegistration(input); }
+    catch { throw new BadRequestException('Invalid registration fields'); }
     const generic = { message: 'If the registration can be accepted, check your email for a verification code.' };
     const hmac = (value: string) => createHmac('sha256', process.env.REGISTRATION_HMAC_SECRET!).update(value).digest('hex');
     const client = await this.pool.connect();
@@ -133,5 +135,5 @@ export class RegistrationService {
     } finally { client.release(); }
   }
 
-  async shutdown() { await this.pool.end(); }
+  async onModuleDestroy(): Promise<void> { await this.pool.end(); }
 }
