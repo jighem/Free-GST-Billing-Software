@@ -31,8 +31,8 @@ M3 bridge adds `apps/portal/src/BillingWorkspace.jsx` containing the fork's dash
 1. Require successful GitHub Actions checks for API/DB, portal build and legacy regression on the exact branch head.
 2. Take separate `gst_saas_dev` backup, then apply migration 0009. Never run migrations on the host's PostgreSQL 10 or other websites.
 3. Build new `gst-saas-api:m3-dashboard` from the checked-out source, start on loopback-only port 14104 alongside existing 14103.
-4. Verify health, unauthenticated dashboard HTTP 401, authenticated two-tenant dashboard metrics, and negative tenant ID tests before switching Plesk API reverse proxy from 14103 to 14104.
-5. Build `apps/portal` using `VITE_API_BASE_URL=https://staging-api.anytimegst.com/api/v1` and **no** public signup flag. Deploy to a new versioned frontend folder `portal-m3` and point Plesk frontend document root there only after testing.
+4. Run `bash /opt/gst-saas-dev/source/deploy/linux/prepare-m3-dashboard.sh` as root after fetching the PR branch. This script backs up the staging DB, applies 0009, builds candidate port 14104 and versioned `portal-m3`, tests health/401, and runs `test-m3-tenant-dashboard.mjs` with A/B login credentials read privately from the existing root-only file (never echoed). It requires both accounts to log in and each account's attempt to access the other's dashboard to return 403 before proceeding.
+5. Only after the script succeeds, switch Plesk's **existing** `staging-api.anytimegst.com` /api/v1/ proxy from port 14103 to 14104. Then point the `staging.anytimegst.com` frontend document root to the prepared `staging.anytimegst.com/portal-m3` release. The script sets `VITE_ENABLE_SIGNUP=false`.
 6. Verify Test A and Test B company dashboard isolation through their own accounts and confirm inactive billing menu entries cannot execute legacy requests.
 7. Rollback by restoring the previous Plesk proxy port and frontend document root. Keep older API container and release files until validation is done.
 
