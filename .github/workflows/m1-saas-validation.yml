@@ -71,6 +71,8 @@ jobs:
       - run: npm run build
         working-directory: apps/api
       - run: node --test tests/registration-policy.test.mjs
+      - run: node --test tests/mail-crypto.test.mjs
+        working-directory: apps/api
         working-directory: apps/api
       - name: Apply migrations and seed disposable CI database
         run: |
@@ -80,6 +82,7 @@ jobs:
           psql -v ON_ERROR_STOP=1 -f db/migrations/0003_subscription_catalog.sql
           psql -v ON_ERROR_STOP=1 -f db/migrations/0004_registration_onboarding.sql
           psql -v ON_ERROR_STOP=1 -f db/migrations/0005_registration_security.sql
+          psql -v ON_ERROR_STOP=1 -f db/migrations/0006_registration_mail_outbox.sql
           psql -v ON_ERROR_STOP=1 -f db/tests/ci_registration.sql
           psql -v ON_ERROR_STOP=1 -f db/tests/ci_seed.sql
       - name: Verify isolated tenant reads under restricted role
