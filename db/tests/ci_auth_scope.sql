@@ -35,3 +35,39 @@ BEGIN
 END $$;
 ROLLBACK;
 RESET ROLE;
+
+-- Pooled session must not retain user A after transaction ends.
+SET ROLE gst_auth;
+BEGIN;
+DO $$
+DECLARE count_visible integer;
+BEGIN
+ SELECT count(*) INTO count_visible FROM tenant_memberships;
+ IF count_visible <> 0 THEN RAISE EXCEPTION 'Unscoped membership query leaked % rows', count_visible; END IF;
+ SELECT count(*) INTO count_visible FROM tenants;
+ IF count_visible <> 0 THEN RAISE EXCEPTION 'Unscoped tenant query leaked % rows', count_visible; END IF;
+END $$;
+ROLLBACK;
+RESET ROLE;
+
+SET ROLE gst_auth;
+BEGIN;
+SELECT set_config('app.auth_user_id','bbbbbbbb-2222-4222-8222-bbbbbbbbbbbb',true);
+DO $$
+DECLARE count_visible integer;
+BEGIN
+ SELECT count(*) INTO count_visible FROM tenant_memberships
+  WHERE tenant_id='22222222-2222-4222-8222-222222222222';
+ IF count_visible <> 1 THEN RAISE EXCEPTION 'Auth B cannot see own membership'; END IF;
+ SELECT count(*) INTO count_visible FROM tenant_memberships
+  WHERE tenant_id='11111111-1111-4111-8111-111111111111';
+ IF count_visible <> 0 THEN RAISE EXCEPTION 'Auth B can see A membership'; END IF;
+ SELECT count(*) INTO count_visible FROM tenants
+  WHERE id='11111111-1111-4111-8111-111111111111';
+ IF count_visible <> 0 THEN RAISE EXCEPTION 'Auth B can see A tenant'; END IF;
+ SELECT count(*) INTO count_visible FROM tenants
+  WHERE id='22222222-2222-4222-8222-222222222222';
+ IF count_visible <> 1 THEN RAISE EXCEPTION 'Auth B cannot see own tenant'; END IF;
+END $$;
+ROLLBACK;
+RESET ROLE;
