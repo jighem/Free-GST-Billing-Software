@@ -856,7 +856,7 @@ function App() {
           aria-label="Open menu" aria-expanded={navOpen}>
           <Menu size={22} />
         </button>
-        <span className="mobile-topbar-title">GST Billing</span>
+        <span className="mobile-topbar-title">Anytime GST</span>
         <span className="mobile-topbar-business">{profile?.businessName || ''}</span>
         {topActions}
       </div>
@@ -871,7 +871,7 @@ function App() {
           {/* "by DiceCodes" always stays, under their name too. "Free forever" is
               in the top bar; on a phone (no top bar) it stays here. */}
           <div className="sidebar-brand-text">
-            <h2 className={`sidebar-title${ownBrand ? ' sidebar-title-own' : ''}`} title={ownBrand ? `${brand.businessName} - Free GST Billing` : undefined}>{ownBrand ? brand.businessName : 'GST Billing'}</h2>
+            <h2 className={`sidebar-title${ownBrand ? ' sidebar-title-own' : ''}`} title={ownBrand ? `${brand.businessName} - Anytime GST` : 'Your GST. Anytime. Anywhere.'}>{ownBrand ? brand.businessName : 'Anytime GST'}</h2>
             <p className="sidebar-subtitle" title="Free forever. Works on this computer, even offline. No tracking, no ads."><span className="sidebar-free sidebar-free-phone">Free forever<br /></span>by DiceCodes</p>
           </div>
           {/* Auto-hide as a ☰ button (was a text checkbox): pressed = the menu
