@@ -27,6 +27,7 @@ type Job = {
   payload_ciphertext: string;
   attempts: number;
   registration_id: string;
+  delivery_version: string;
 };
 
 export async function dispatchOnce(): Promise<boolean> {
@@ -48,7 +49,7 @@ export async function dispatchOnce(): Promise<boolean> {
     UPDATE registration_mail_outbox o
     SET locked_until=now()+interval '2 minutes', attempts=o.attempts+1
     FROM next WHERE o.id=next.id
-    RETURNING o.id, o.recipient_email, o.payload_ciphertext, o.attempts, o.registration_id
+    RETURNING o.id, o.recipient_email, o.payload_ciphertext, o.attempts, o.registration_id, o.delivery_version
   `);
   if (!selected.rows[0]) return false;
   const job = selected.rows[0];
@@ -62,17 +63,22 @@ export async function dispatchOnce(): Promise<boolean> {
       // Deterministic ID helps downstream duplicate detection if worker crashes after SMTP ACCEPT.
       messageId: `<registration-${job.id}@${process.env.SMTP_MESSAGE_ID_DOMAIN || 'gst-saas.invalid'}>`,
     });
-    await pool.query(`
+    const marked = await pool.query(`
       UPDATE registration_mail_outbox SET sent_at=now(), locked_until=NULL, last_error_code=NULL
-      WHERE id=$1`, [job.id]);
-    await pool.query('UPDATE registration_requests SET dispatched_at=now() WHERE id=$1', [job.registration_id]);
+      WHERE id=$1 AND delivery_version=$2 AND sent_at IS NULL
+      RETURNING id`, [job.id, job.delivery_version]);
+    // A resend may replace this job during SMTP delivery. Never mark a newer
+    // token as sent based on the older SMTP attempt.
+    if (marked.rowCount) {
+      await pool.query('UPDATE registration_requests SET dispatched_at=now() WHERE id=$1', [job.registration_id]);
+    }
   } catch (error) {
     // Never log SMTP messages, tokens, recipient emails or secret-bearing errors.
     const retryMinutes = Math.min(2 ** job.attempts, 15);
     await pool.query(`
       UPDATE registration_mail_outbox
       SET locked_until=NULL, available_at=now()+($2::integer * interval '1 minute'), last_error_code='DELIVERY_FAILED'
-      WHERE id=$1`, [job.id, retryMinutes]);
+      WHERE id=$1 AND delivery_version=$3`, [job.id, retryMinutes, job.delivery_version]);
     console.error('Registration mail delivery failed; queued retry');
   }
   return true;
