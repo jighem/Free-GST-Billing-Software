@@ -2,7 +2,7 @@
 -- Execute after migrations 0001-0007, with staging migration owner.
 -- Existing FORCE ROW LEVEL SECURITY policies must remain enabled.
 BEGIN;
-GRANT UPDATE (legal_name, trade_name, gstin, state_code, billing_email, billing_address)
+GRANT SELECT (id, tenant_id, legal_name, trade_name, gstin, state_code, billing_email, billing_address)\n  ON companies TO gst_app;\nGRANT UPDATE (legal_name, trade_name, gstin, state_code, billing_email, billing_address)
   ON companies TO gst_app;
 -- SELECT permission for company listing is provisioned in initial deployment;
 -- keep its existing grants intact. Do not grant INSERT/DELETE or tenant_id UPDATE.
