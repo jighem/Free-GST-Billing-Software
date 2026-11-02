@@ -18,7 +18,7 @@ export class CompaniesController {
     await this.identity.requireMember(userId, tenantId);
     return this.db.withTenant(tenantId, async client => {
       return (await client.query(
-        'SELECT id, legal_name, trade_name, gstin, state_code, billing_email, billing_address FROM companies ORDER BY legal_name LIMIT 100'
+        'SELECT id, legal_name, trade_name, gstin, state_code, billing_email, billing_address, onboarding_completed_at FROM companies ORDER BY legal_name LIMIT 100'
       )).rows;
     });
   }
@@ -39,9 +39,9 @@ export class CompaniesController {
       // RLS and tenant ID are both applied. Do not permit company or tenant reparenting.
       const result = await client.query(
         `UPDATE companies SET legal_name=$3, trade_name=$4, gstin=$5,
-         state_code=$6, billing_email=$7, billing_address=$8::jsonb
+         state_code=$6, billing_email=$7, billing_address=$8::jsonb, onboarding_completed_at=now()
          WHERE tenant_id=$1 AND id=$2
-         RETURNING id, legal_name, trade_name, gstin, state_code, billing_email, billing_address`,
+         RETURNING id, legal_name, trade_name, gstin, state_code, billing_email, billing_address, onboarding_completed_at`,
         [tenantId,companyId,company.legalName,company.tradeName,company.gstin,
          company.stateCode,company.billingEmail,JSON.stringify(company.billingAddress)]);
       if (!result.rows[0]) throw new ForbiddenException('Company is not available in this workspace');
