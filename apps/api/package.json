@@ -9,7 +9,9 @@
     "start": "node dist/main.js",
     "typecheck": "tsc --noEmit",
     "test:rls": "node tests/rls-isolation.mjs",
-    "test:registration": "npm run build && node --test tests/registration-policy.test.mjs"
+    "test:registration": "npm run build && node --test tests/registration-policy.test.mjs",
+    "test:mail-crypto": "npm run build && node --test tests/mail-crypto.test.mjs",
+    "mail:once": "node dist/workers/registration-mail.worker.js --once"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.0",
