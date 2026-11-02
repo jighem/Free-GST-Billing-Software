@@ -70,6 +70,8 @@ jobs:
         working-directory: apps/api
       - run: npm run build
         working-directory: apps/api
+      - run: node --test tests/registration-policy.test.mjs
+        working-directory: apps/api
       - name: Apply migrations and seed disposable CI database
         run: |
           psql -v ON_ERROR_STOP=1 -c "CREATE ROLE gst_app LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOBYPASSRLS PASSWORD 'ci_app_only';"
