@@ -17,7 +17,7 @@ test('tampered ciphertext is rejected', () => {
   process.env.REGISTRATION_MAIL_KEY = 'b'.repeat(64);
   const data = encryptVerificationLink('https://staging.example.invalid/verify-email');
   const parts = data.split('.');
-  parts[2] = parts[2] + 'x';
+  parts[1] = (parts[1].startsWith('A') ? 'B' : 'A') + parts[1].slice(1);
   assert.throws(() => decryptVerificationLink(parts.join('.')));
 });
 test('missing encryption key fails closed', () => {
