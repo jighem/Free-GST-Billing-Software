@@ -4,6 +4,7 @@ import { DatabaseService } from './db/database.service';
 import { IdentityService } from './modules/identity/identity.service';
 import { IdentityController } from './modules/identity/identity.controller';
 import { CompaniesController } from './modules/tenancy/companies.controller';
+import { BillingDashboardController } from './modules/tenancy/billing-dashboard.controller';
 import { RegistrationController } from './modules/onboarding/registration.controller';
 import { RegistrationService } from './modules/onboarding/registration.service';
 
@@ -12,7 +13,7 @@ const registrationEnabled = process.env.ENABLE_REGISTRATION === '1';
 
 @Module({
   controllers: [
-    HealthController, IdentityController, CompaniesController,
+    HealthController, IdentityController, CompaniesController, BillingDashboardController,
     ...(registrationEnabled ? [RegistrationController] : []),
   ],
   providers: [
