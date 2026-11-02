@@ -28,10 +28,26 @@ function Portal() {
   const [password, setPassword] = useState('');
   const [companyName, setCompanyName] = useState('');
   const [slug, setSlug] = useState('');
+  const [editing, setEditing] = useState(null);
+  const [setup, setSetup] = useState({
+    legalName: '', tradeName: '', gstin: '', stateCode: '', billingEmail: '',
+    line1: '', line2: '', city: '', state: '', postalCode: ''
+  });
+  const states = {
+    '01':'Jammu and Kashmir','02':'Himachal Pradesh','03':'Punjab','04':'Chandigarh',
+    '05':'Uttarakhand','06':'Haryana','07':'Delhi','08':'Rajasthan','09':'Uttar Pradesh',
+    '10':'Bihar','11':'Sikkim','12':'Arunachal Pradesh','13':'Nagaland','14':'Manipur',
+    '15':'Mizoram','16':'Tripura','17':'Meghalaya','18':'Assam','19':'West Bengal',
+    '20':'Jharkhand','21':'Odisha','22':'Chhattisgarh','23':'Madhya Pradesh','24':'Gujarat',
+    '26':'Dadra and Nagar Haveli and Daman and Diu','27':'Maharashtra','29':'Karnataka',
+    '30':'Goa','31':'Lakshadweep','32':'Kerala','33':'Tamil Nadu','34':'Puducherry',
+    '35':'Andaman and Nicobar Islands','36':'Telangana','37':'Andhra Pradesh',
+    '38':'Ladakh','97':'Other Territory'
+  };
 
   function navigate(next) { setError(''); setNotice(''); setPage(next); }
   function resetSession() {
-    setToken(null); setPassword(''); setMemberships([]); setCompanies([]); setSelected(null);
+    setToken(null); setPassword(''); setMemberships([]); setCompanies([]); setSelected(null); setEditing(null);
     navigate('login');
   }
 
@@ -78,7 +94,51 @@ function Portal() {
       const result = await api('/tenants/' + encodeURIComponent(workspace.tenant_id) + '/companies', { token });
       setCompanies(result);
       setSelected(workspace);
+      setEditing(null);
       setPage('dashboard');
+    } catch (err) {
+      setError(err.message);
+      if (err.status === 401) resetSession();
+    } finally { setBusy(false); }
+  }
+
+  function editCompany(company) {
+    const address = company.billing_address || {};
+    setSetup({
+      legalName: company.legal_name || '',
+      tradeName: company.trade_name || '',
+      gstin: company.gstin || '',
+      stateCode: company.state_code || '',
+      billingEmail: company.billing_email || '',
+      line1: address.line1 || '', line2: address.line2 || '',
+      city: address.city || '', state: address.state || '', postalCode: address.postalCode || ''
+    });
+    setEditing(company.id);
+    navigate('company-setup');
+  }
+
+  async function saveCompany() {
+    if (busy || !selected || !editing || !token) return;
+    setBusy(true); setError(''); setNotice('');
+    try {
+      const payload = {
+        legalName: setup.legalName.trim(),
+        tradeName: setup.tradeName.trim(),
+        gstin: setup.gstin.trim().toUpperCase(),
+        stateCode: setup.stateCode,
+        billingEmail: setup.billingEmail.trim(),
+        billingAddress: {
+          line1: setup.line1.trim(), line2: setup.line2.trim(),
+          city: setup.city.trim(), state: setup.state.trim(), postalCode: setup.postalCode.trim()
+        }
+      };
+      const result = await api('/tenants/' + encodeURIComponent(selected.tenant_id)
+        + '/companies/' + encodeURIComponent(editing) + '/setup',
+        { method: 'PATCH', token, body: payload });
+      setCompanies(previous => previous.map(c => c.id === result.id ? result : c));
+      setEditing(null);
+      setPage('dashboard');
+      setNotice('Company details saved successfully.');
     } catch (err) {
       setError(err.message);
       if (err.status === 401) resetSession();
@@ -141,11 +201,51 @@ function Portal() {
           {memberships.length ? memberships.map(t=><button className="workspace" key={t.tenant_id} disabled={busy} onClick={()=>openTenant(t)}><span><strong>{t.display_name}</strong><small>{t.role}</small></span><ArrowRight size={18}/></button>)
             : <div className="empty">No active workspaces found for this account.</div>}
         </>}
+        {page === 'company-setup' && token && selected && editing && <>
+          <div className="panel-icon"><Building2/></div><h2>Company setup</h2>
+          <p className="muted">Complete your business information for {selected.display_name}. GSTIN is optional for unregistered businesses.</p>
+          <form onSubmit={e=>{e.preventDefault();saveCompany();}}>
+            <label>Legal business name
+              <input required minLength="2" maxLength="200" value={setup.legalName}
+                onChange={e=>setSetup(v=>({...v,legalName:e.target.value}))}/></label>
+            <label>Trade name (optional)
+              <input maxLength="200" value={setup.tradeName}
+                onChange={e=>setSetup(v=>({...v,tradeName:e.target.value}))}/></label>
+            <label>State / UT
+              <select value={setup.stateCode} onChange={e=>setSetup(v=>({...v,stateCode:e.target.value}))}>
+                <option value="">Select state or UT</option>
+                {Object.entries(states).map(([code,name])=><option key={code} value={code}>{code} — {name}</option>)}
+              </select></label>
+            <label>GSTIN (optional)
+              <input value={setup.gstin} maxLength="15" pattern="[0-9]{2}[A-Za-z]{5}[0-9]{4}[A-Za-z][1-9A-Za-z]Z[0-9A-Za-z]"
+                placeholder="15-character GSTIN" onChange={e=>setSetup(v=>({...v,gstin:e.target.value.toUpperCase()}))}/></label>
+            <label>Billing email
+              <input type="email" maxLength="254" value={setup.billingEmail}
+                onChange={e=>setSetup(v=>({...v,billingEmail:e.target.value}))}/></label>
+            <div className="sectiontitle">Billing address</div>
+            {[
+              ['line1','Address line 1'],['line2','Address line 2'],['city','City'],
+              ['state','State / UT name'],['postalCode','PIN code']
+            ].map(([key,name])=><label key={key}>{name}
+              <input maxLength={key === 'postalCode' ? 10 : 200} value={setup[key]}
+                onChange={e=>setSetup(v=>({...v,[key]:e.target.value}))}/></label>)}
+            <button className="primary" type="submit" disabled={busy}>
+              {busy ? 'Saving…' : 'Save company details'} <ArrowRight size={18}/></button>
+          </form>
+          <p className="foot"><button type="button" className="link" onClick={()=>navigate('dashboard')}>Back to workspace</button></p>
+        </>}
         {page === 'dashboard' && token && selected && <>
           <div className="panel-icon"><Building2/></div><h2>{selected.display_name}</h2>
           <p className="muted">Workspace access: {selected.role}</p>
           <div className="sectiontitle">Registered companies</div>
-          {companies.length ? companies.map(c=><div key={c.id} className="company"><strong>{c.legal_name}</strong><small>{c.gstin || 'GSTIN not configured'}</small></div>) : <div className="empty">No company records returned.</div>}
+          {companies.length ? companies.map(c=><div key={c.id} className="company">
+            <strong>{c.legal_name}</strong>
+            <small>{c.gstin || 'GSTIN not configured'}</small>
+            {['owner','admin'].includes(selected.role) &&
+              <button type="button" className="link setup-link" onClick={()=>editCompany(c)}>
+                Complete / edit company setup
+              </button>}
+          </div>) : <div className="empty">No company records returned.</div>}
           <p className="muted note">Invoice creation and subscription administration are not available in this development preview.</p>
           <button type="button" className="secondary" onClick={()=>navigate('workspaces')}>Change workspace</button>
         </>}
