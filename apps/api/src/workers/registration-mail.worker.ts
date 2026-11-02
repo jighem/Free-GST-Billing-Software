@@ -58,7 +58,7 @@ export async function dispatchOnce(): Promise<boolean> {
     await transport.sendMail({
       from: process.env.SMTP_FROM,
       to: job.recipient_email,
-      subject: 'Verify your GST SaaS registration',
+      subject: 'Verify your Anytime GST registration',
       text: `Verify your email using this link: ${verificationUrl}\n\nThis link expires after 30 minutes. If you did not register, ignore it.`,
       // Deterministic ID helps downstream duplicate detection if worker crashes after SMTP ACCEPT.
       messageId: `<registration-${job.id}@${process.env.SMTP_MESSAGE_ID_DOMAIN || 'gst-saas.invalid'}>`,
