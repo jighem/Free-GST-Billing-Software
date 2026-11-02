@@ -78,14 +78,17 @@ jobs:
       - name: Apply migrations and seed disposable CI database
         run: |
           psql -v ON_ERROR_STOP=1 -c "CREATE ROLE gst_app LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOBYPASSRLS PASSWORD 'ci_app_only';"
+          psql -v ON_ERROR_STOP=1 -c "CREATE ROLE gst_auth LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOBYPASSRLS PASSWORD 'ci_auth_only';"
           psql -v ON_ERROR_STOP=1 -f db/migrations/0001_saas_foundation.sql
           psql -v ON_ERROR_STOP=1 -f db/migrations/0002_identity_sessions.sql
           psql -v ON_ERROR_STOP=1 -f db/migrations/0003_subscription_catalog.sql
           psql -v ON_ERROR_STOP=1 -f db/migrations/0004_registration_onboarding.sql
           psql -v ON_ERROR_STOP=1 -f db/migrations/0005_registration_security.sql
           psql -v ON_ERROR_STOP=1 -f db/migrations/0006_registration_mail_outbox.sql
+          psql -v ON_ERROR_STOP=1 -f db/migrations/0007_auth_runtime_scope.sql
           psql -v ON_ERROR_STOP=1 -f db/tests/ci_registration.sql
           psql -v ON_ERROR_STOP=1 -f db/tests/ci_seed.sql
+          psql -v ON_ERROR_STOP=1 -f db/tests/ci_auth_scope.sql
       - name: Verify isolated tenant reads under restricted role
         working-directory: apps/api
         env:
