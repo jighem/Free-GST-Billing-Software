@@ -16,6 +16,27 @@ export class DatabaseService implements OnModuleDestroy {
     return (await this.auth.query<T>(sql, args)).rows;
   }
 
+  // Auth scopes use a single transaction-local verified user ID. Never use
+  // session-wide SET or accept the value from an unauthenticated request.
+  async withAuthenticatedUser<T>(userId: string, action: (client: PoolClient) => Promise<T>): Promise<T> {
+    if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(userId)) {
+      throw new Error('Invalid authenticated user ID');
+    }
+    const client = await this.auth.connect();
+    try {
+      await client.query('BEGIN');
+      await client.query("SELECT set_config('app.auth_user_id', $1, true)", [userId]);
+      const result = await action(client);
+      await client.query('COMMIT');
+      return result;
+    } catch (error) {
+      try { await client.query('ROLLBACK'); } catch { /* preserve original error */ }
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
   async withTenant<T>(tenantId: string, action: (client: PoolClient) => Promise<T>): Promise<T> {
     if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(tenantId)) {
       throw new Error('Invalid tenant ID');
