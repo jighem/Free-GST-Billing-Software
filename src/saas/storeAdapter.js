@@ -25,11 +25,37 @@ function companyBase(session,companyId) {
   return BASE+'/tenants/'+encodeURIComponent(session.tenantId)+'/companies/'+encodeURIComponent(companyId);
 }
 
+function asOriginalProfile(company) {
+  const address=company.billing_address||{};
+  return {
+    id:company.id,
+    businessName:company.legal_name||'',
+    tradeName:company.trade_name||'',
+    gstin:company.gstin||'',
+    stateCode:company.state_code||'',
+    email:company.billing_email||'',
+    address:address.line1||'',
+    address2:address.line2||'',
+    city:address.city||'',
+    state:address.state||'',
+    pin:address.postalCode||'',
+    country:'India'
+  };
+}
+
 export async function requestSaas(path,{method='GET',body,companyId,token}={}) {
   if(typeof path!=='string'||!path.startsWith('/')||path.startsWith('//')||path.includes('..'))
     throw new Error('Invalid API path');
   const session=readSaasSession();
   if(!session||!token||token!==session.token) throw new Error('Session expired. Please sign in again.');
+  if(path==='/profile'||path==='/profiles'){
+    if(method!=='GET')throw new Error('Profile editing requires the reviewed SaaS settings adapter.');
+    const companies=await requestSaas('/companies',{token});
+    if(path==='/profiles')return companies.map(asOriginalProfile);
+    const current=companies.find(x=>x.id===companyId);
+    if(!current)throw new Error('Selected company is not accessible.');
+    return asOriginalProfile(current);
+  }
   let endpoint;
   if(path==='/auth/tenants'||path==='/auth/logout') endpoint=BASE+path;
   else if(path==='/companies') endpoint=BASE+'/tenants/'+encodeURIComponent(session.tenantId)+'/companies';
@@ -62,6 +88,7 @@ export function translateOriginalRequest(url,options={},companyId) {
   else if(raw.startsWith('clients/'))path='/customers/'+encodeURIComponent(raw.slice(8));
   else if(raw==='products')path='/products';
   else if(raw.startsWith('products/'))path='/products/'+encodeURIComponent(raw.slice(9));
+  else if((raw==='profile'||raw==='profiles')&&method==='GET')path='/'+raw;
   else {
     // Do not fake a successful response or risk making a legacy write.
     const error=new Error('This original GST module needs its tenant-safe API adapter before use: '+raw.split('/')[0]);
