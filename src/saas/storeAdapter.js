@@ -88,6 +88,11 @@ export function translateOriginalRequest(url,options={},companyId) {
   else if(raw.startsWith('clients/'))path='/customers/'+encodeURIComponent(raw.slice(8));
   else if(raw==='products')path='/products';
   else if(raw.startsWith('products/'))path='/products/'+encodeURIComponent(raw.slice(9));
+  else if(raw.startsWith('meta/')){
+    const key=raw.slice(5);
+    if(!key||key.includes('..')||key.startsWith('/'))throw new Error('Invalid settings path');
+    path='/legacy-meta/'+key;
+  }
   else if(raw==='bills' && method==='GET')path='/legacy-invoice-drafts';
   else if((raw==='bills'||raw==='bills?overwrite=1')&&method==='POST'){
     path='/legacy-invoice-drafts'+(raw.includes('?')?'?overwrite=1':'');
