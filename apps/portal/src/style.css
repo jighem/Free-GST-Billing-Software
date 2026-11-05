@@ -76,3 +76,5 @@
 .billing-table-actions{display:flex;align-items:center;gap:6px}
 .billing-table-actions button{border:1px solid #e1e7f1;border-radius:7px;background:#fff;padding:7px 10px;color:#2859a7;font-weight:650;cursor:pointer}
 @media(max-width:700px){.billing-form-fields{grid-template-columns:1fr}.billing-page-header{align-items:flex-start}}
+
+.billing-form-fields select{width:100%;padding:11px;border:1px solid #dce5ef;border-radius:8px;background:#fbfdff;color:#132238;font:inherit}
