@@ -65,4 +65,37 @@ for(const [own,foreign,label] of [[A,B,'A -> B'],[B,A,'B -> A']]){
     '/tenants/'+own.tenant+'/companies/'+foreign.company+'/dashboard',own.token);
   assert.equal(foreignWithinOwnTenant.status,403,label+' cross-company access must be denied');
 }
-console.log('M3 LOCALHOST CANDIDATE: ALL AUTHENTICATION AND TENANT ISOLATION TESTS PASSED');
+// Safely exercise customers/products against synthetic test accounts.
+// Always clean up created records, and never output auth tokens or passwords.
+for (const [label,own,foreign] of [['A',A,B],['B',B,A]]) {
+  for (const [resource,payload] of [
+    ['customers',{name:'CI Synthetic '+label+' Client',city:'Mumbai'}],
+    ['products',{name:'CI Synthetic '+label+' Product',kind:'goods',hsn:'1234',sellingPrice:25,taxPercent:18}]
+  ]) {
+    const base='/tenants/'+own.tenant+'/companies/'+own.company+'/'+resource;
+    const made=await request(base,own.token,'POST',payload);
+    assert.equal(made.status,201,label+' '+resource+' create failed');
+    const id=made.data?.id;
+    assert.match(id,/^[0-9a-f-]{36}$/i);
+    try {
+      const mine=await request(base,own.token);
+      assert.equal(mine.status,200);
+      assert.ok(mine.data.some(row=>row.id===id),'New '+resource+' missing in '+label);
+      const others=await request('/tenants/'+foreign.tenant+'/companies/'+foreign.company+'/'+resource,foreign.token);
+      assert.equal(others.status,200);
+      assert.ok(!others.data.some(row=>row.id===id),'Cross-tenant '+resource+' leakage');
+      const foreignPath='/tenants/'+foreign.tenant+'/companies/'+foreign.company+'/'+resource;
+      const unauthorized=await request(foreignPath,own.token);
+      assert.equal(unauthorized.status,403,'Cross-tenant '+resource+' access allowed');
+      const crossUpdate=await request(foreignPath,own.token,'POST',{...payload,id});
+      assert.equal(crossUpdate.status,403,'Cross-tenant '+resource+' mutation allowed');
+      const crossDelete=await request(foreignPath+'/'+id,own.token,'DELETE');
+      assert.equal(crossDelete.status,403,'Cross-tenant '+resource+' deletion allowed');
+      console.log('Test '+label+' '+resource+': create, isolated read, blocked foreign write PASS');
+    } finally {
+      const removed=await request(base+'/'+id,own.token,'DELETE');
+      assert.equal(removed.status,200,label+' '+resource+' test cleanup failed');
+    }
+  }
+}
+console.log('M3 LOCALHOST CANDIDATE: AUTHENTICATION, CUSTOMERS, PRODUCTS AND TENANT ISOLATION PASS');
