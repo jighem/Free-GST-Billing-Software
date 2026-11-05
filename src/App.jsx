@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useMemo, lazy, Suspense } from 'react';
 import { Home, FileText, Settings, Plus, Users, Package, BarChart3, Wallet, RefreshCw, Receipt, BookOpen, Moon, Sun, Download, X, ShoppingCart, ChevronDown, Building2, Pencil, HelpCircle, Search, Command, Bell, Calculator, HardDrive, Menu, Heart, Banknote } from 'lucide-react';
+import { readSaasSession, requestSaas } from './saas/storeAdapter';
 import { getAllProfiles, saveProfile, getEnabledModules, getMenuOrder, onMenuChanged, getAllBills, getAllProducts, getStockAlertSettings, getAllClients, runUpdateNow, getLockStatus } from './store';
 import { isModuleEnabled, getUpcomingFilings, countsAsSales, localToday, toLocalIsoDate, DOCS_URL, findLowStock, trackedStock } from './utils';
 import { orderedMenu } from './utils/businessTypes';
@@ -70,6 +71,7 @@ const MENU_BRAND_KEY = 'gst_menuBrand';
 function App() {
   // v1.9.3 — Setup Wizard shown on first-run (before onboardingComplete = true)
   const [showWizard, setShowWizard] = useState(() => {
+    if (import.meta.env?.VITE_ANYTIME_SAAS_MODE === 'true') return false; // SaaS company onboarding already completed
     try { return !getPrintSettings().onboardingComplete; } catch { return false; }
   });
   const [currentView, setCurrentView] = useState(() => {
@@ -336,7 +338,15 @@ function App() {
 
     const checkServer = async () => {
       try {
-        const res = await fetch('/api/profile', { signal: AbortSignal.timeout(8000) });
+        const res = import.meta.env?.VITE_ANYTIME_SAAS_MODE === 'true'
+          ? { ok: true, json: () => {
+              const session = readSaasSession();
+              return requestSaas('/profile', {
+                token: session?.token,
+                companyId: window.__anytimeSaasCompanyId
+              });
+            }}
+          : await fetch('/api/profile', { signal: AbortSignal.timeout(8000) });
         if (res.ok) {
           if (cancelled) return;
           misses = 0;
