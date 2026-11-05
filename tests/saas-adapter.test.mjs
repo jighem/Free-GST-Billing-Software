@@ -20,7 +20,7 @@ test('preserves original customer/product store contract only',()=>{
   ['/api/clients','/customers'],['/api/clients/'+companyId,'/customers/'+companyId],
   ['/api/products','/products'],['/api/products/'+companyId,'/products/'+companyId]
  ]) assert.equal(translateOriginalRequest(oldPath,{},companyId).path,expected);
- for(const path of ['/api/bills','/api/backups/now','/api/profile','/api/update','/api/lock','/api/meta/name'])
+ for(const path of ['/api/bills','/api/backups/now','/api/update','/api/lock','/api/meta/name'])
    assert.throws(()=>translateOriginalRequest(path,{},companyId),e=>e.code==='SAAS_MODULE_NOT_MIGRATED');
 });
 test('never calls legacy Express and always scopes data to chosen tenant/company',async()=>{
@@ -54,4 +54,20 @@ test('rejects traversal and does not send unsafe requests',async()=>{
  await assert.rejects(requestSaas('//evil',{token,companyId}),/Invalid API path/);
  await assert.rejects(requestSaas('/../bills',{token,companyId}),/Invalid API path/);
  assert.equal(count,0);
+});
+
+test('original profile is sourced from authorized company fields without local files',async()=>{
+ globalThis.sessionStorage=storage();
+ globalThis.fetch=async()=>({ok:true,json:async()=>[{
+   id:companyId,legal_name:'Anytime GST Demo',trade_name:'Demo',gstin:'27ABCDE1234F1Z5',
+   state_code:'27',billing_email:'test@example.invalid',
+   billing_address:{line1:'Line 1',city:'Mumbai',postalCode:'400001'}
+ }]});
+ assert.equal(translateOriginalRequest('/api/profile',{method:'GET'},companyId).path,'/profile');
+ const p=await requestSaas('/profile',{companyId,token});
+ assert.equal(p.businessName,'Anytime GST Demo');
+ assert.equal(p.gstin,'27ABCDE1234F1Z5');
+ assert.equal(p.city,'Mumbai');
+ await assert.rejects(requestSaas('/profile',{companyId,token,method:'POST',body:{businessName:'bad'}}),
+   /requires the reviewed SaaS settings adapter/);
 });
