@@ -3,7 +3,8 @@
 import { readFileSync } from 'node:fs';
 import assert from 'node:assert/strict';
 
-const API = 'http://127.0.0.1:14104/api/v1';
+const API = process.env.M3_API_BASE || 'http://127.0.0.1:14104/api/v1';
+const dashboardOnly = process.env.M3_DASHBOARD_ONLY === '1';
 const data = readFileSync('/private/test-users.txt','utf8');
 function credentials(label) {
   const start = data.indexOf(label+'\n');
@@ -67,7 +68,7 @@ for(const [own,foreign,label] of [[A,B,'A -> B'],[B,A,'B -> A']]){
 }
 // Safely exercise customers/products against synthetic test accounts.
 // Always clean up created records, and never output auth tokens or passwords.
-for (const [label,own,foreign] of [['A',A,B],['B',B,A]]) {
+if (!dashboardOnly) for (const [label,own,foreign] of [['A',A,B],['B',B,A]]) {
   for (const [resource,payload] of [
     ['customers',{name:'CI Synthetic '+label+' Client',city:'Mumbai'}],
     ['products',{name:'CI Synthetic '+label+' Product',kind:'goods',hsn:'1234',sellingPrice:25,taxPercent:18}]
@@ -98,4 +99,4 @@ for (const [label,own,foreign] of [['A',A,B],['B',B,A]]) {
     }
   }
 }
-console.log('M3 LOCALHOST CANDIDATE: AUTHENTICATION, CUSTOMERS, PRODUCTS AND TENANT ISOLATION PASS');
+console.log(dashboardOnly ? 'M3 DASHBOARD: AUTHENTICATION AND TENANT ISOLATION PASS' : 'M3 LOCALHOST CANDIDATE: AUTHENTICATION, CUSTOMERS, PRODUCTS AND TENANT ISOLATION PASS');
