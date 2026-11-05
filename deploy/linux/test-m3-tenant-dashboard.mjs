@@ -99,4 +99,10 @@ if (!dashboardOnly) for (const [label,own,foreign] of [['A',A,B],['B',B,A]]) {
     }
   }
 }
-console.log(dashboardOnly ? 'M3 DASHBOARD: AUTHENTICATION AND TENANT ISOLATION PASS' : 'M3 LOCALHOST CANDIDATE: AUTHENTICATION, CUSTOMERS, PRODUCTS AND TENANT ISOLATION PASS');
+for (const [label, session] of [['A', A], ['B', B]]) {
+  const response = await request('/auth/logout', session.token, 'POST');
+  assert.equal(response.status, 201, label + ' logout failed');
+  const denied = await request('/auth/tenants', session.token);
+  assert.equal(denied.status, 401, label + ' revoked session still active');
+}
+console.log(dashboardOnly ? 'M3 DASHBOARD: AUTHENTICATION, TENANT ISOLATION AND LOGOUT PASS' : 'M3 LOCALHOST CANDIDATE: AUTHENTICATION, CUSTOMERS, PRODUCTS, TENANT ISOLATION AND LOGOUT PASS');
