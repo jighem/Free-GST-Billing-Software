@@ -5,6 +5,7 @@ import { getFinancialYearLabel, parseLocalDate, nextCounterValue, startFor, numb
 import { poCounterKey, formatPoNumber } from './utils/purchaseOrders';
 
 import { logProblem } from './utils/problemLog';
+import { readSaasSession, requestSaas, translateOriginalRequest } from './saas/storeAdapter';
 
 const API = '/api';
 
@@ -17,6 +18,14 @@ const logApiProblem = (options, url, status, message) => {
 };
 
 async function apiFetch(url, options = {}) {
+  if (import.meta.env.VITE_ANYTIME_SAAS_MODE === 'true') {
+    const session = readSaasSession();
+    if (!session) throw new Error('Anytime GST login required.');
+    // Selection occurs only after a server-verified membership and company lookup.
+    const companyId = window.__anytimeSaasCompanyId;
+    const adapted = translateOriginalRequest(url, options, companyId);
+    return requestSaas(adapted.path, { ...adapted, token: session.token });
+  }
   let res;
   try {
     res = await fetch(url, {
