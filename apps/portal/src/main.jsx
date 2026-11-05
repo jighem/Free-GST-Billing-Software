@@ -205,7 +205,7 @@ function Portal() {
     {page==='billing' && token && selected && activeCompany ? <BillingWorkspace
       token={token} tenant={selected} companies={companies} activeCompany={activeCompany}
       onCompany={setActiveCompany} onSetup={editCompany}
-      onWorkspaces={()=>navigate('workspaces')} onSignOut={signOut}/>
+      onWorkspaces={()=>navigate('workspaces')} onSignOut={signOut} onAuthExpired={resetSession}/>
     : <>
     <header className="topbar">
       <div className="brand"><span className="brandicon"><FileText size={22}/></span><span className="brandtext"><strong>Anytime GST</strong><small>Your GST. Anytime. Anywhere.</small></span><span className="staging">STAGING</span></div>
