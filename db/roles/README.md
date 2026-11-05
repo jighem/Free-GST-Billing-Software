@@ -1,26 +1,18 @@
-# Development-only PostgreSQL role boundaries
+# AnytimeGST — least-privilege PostgreSQL roles
 
-Create two distinct LOGIN roles with unique secrets: `gst_auth` and `gst_app`. Both must be NOSUPERUSER, NOBYPASSRLS, NOINHERIT and not owners of tables. Apply schema migrations as a separate owner. Provision role credentials outside GitHub.
+Use separate credentials for `AUTH_DATABASE_URL` (`gst_auth`) and `DATABASE_URL` (`gst_app`). Neither runtime role may own tables, be a superuser, or have BYPASSRLS. Keep migration credentials outside the running application and GitHub.
 
-After 0001 and 0002, the migration owner can execute:
+Apply migrations in order through `0009_auth_policy_reconciliation.sql`. Migration 0009 supersedes the **obsolete unrestricted** `identity_memberships_read` and `identity_tenants_read` policies (`USING (true)`). **Never recreate those policies.** The old guidance has been removed because permissive policies are OR-combined in PostgreSQL and would expose other users' membership metadata once SELECT was granted.
 
-```sql
-REVOKE ALL ON ALL TABLES IN SCHEMA public FROM PUBLIC;
-REVOKE ALL ON SCHEMA public FROM PUBLIC;
-GRANT USAGE ON SCHEMA public TO gst_auth, gst_app;
-GRANT SELECT (id,email,password_hash) ON users TO gst_auth;
-GRANT SELECT (id,display_name,status) ON tenants TO gst_auth;
-GRANT SELECT (tenant_id,user_id,role) ON tenant_memberships TO gst_auth;
-GRANT SELECT (user_id,token_hash,expires_at), INSERT (user_id,token_hash,expires_at) ON user_sessions TO gst_auth;
-GRANT SELECT ON companies TO gst_app;
+The restricted `gst_auth` role receives column-level access solely for password verification, hashed sessions and workspace membership lookup. Membership queries run in a transaction with a verified `app.auth_user_id` and the `auth_user_memberships_read` / `auth_user_tenants_read` RLS policies. Tenant business queries use `gst_app`, FORCE RLS, and a transaction-scoped `app.tenant_id`; every route must first authenticate the session and authorize tenant membership and company access.
 
--- Identity role reads only membership/tenant metadata; never GST business data.
--- Its two identity-only read policies are intentionally broad for internal membership
--- resolution, and do not grant invoice, customer or company access.
-CREATE POLICY identity_memberships_read ON tenant_memberships FOR SELECT TO gst_auth USING (true);
-CREATE POLICY identity_tenants_read ON tenants FOR SELECT TO gst_auth USING (true);
-```
+## Required validation
 
-Authentication uses `AUTH_DATABASE_URL` and business queries use `DATABASE_URL`; never reuse credentials. The global identity reader can see tenant metadata and all memberships (not customer/company/invoice data), so its credentials must be protected and it must only execute fixed parameterized identity SQL.
+- No user context: `gst_auth` reads zero memberships and tenants.
+- Two isolated users: each sees only their own membership and tenant.
+- No `identity_*_read` policies with `USING (true)`.
+- Missing, invalid and expired bearer tokens fail; login and company access tested through the running NestJS API.
+- Business table reads use minimum column grants and tenant/company filters.
+- No live customer, GST or invoice data until integration, rate limiting, account recovery, session revocation and security review pass.
 
-The transaction-scoped RLS setting `app.tenant_id` prevents accidental cross-tenant application queries but is not safe against arbitrary SQL executed by a compromised tenant DB role; such SQL could set the context itself. Never expose raw SQL endpoints; test with restricted roles, not a migration owner. Do not enable public network exposure before audit, login throttling, MFA and session revocation are added.
+Custom `app.auth_user_id` and `app.tenant_id` settings are not protected against arbitrary SQL under a compromised runtime role. Never expose arbitrary SQL execution, and test the database with restricted roles rather than a migration owner.
