@@ -20,6 +20,9 @@ test('preserves original customer/product store contract only',()=>{
   ['/api/clients','/customers'],['/api/clients/'+companyId,'/customers/'+companyId],
   ['/api/products','/products'],['/api/products/'+companyId,'/products/'+companyId]
  ]) assert.equal(translateOriginalRequest(oldPath,{},companyId).path,expected);
+ assert.equal(translateOriginalRequest('/api/meta/invoiceNumberSettings',{method:'GET'},companyId).path,'/legacy-meta/invoiceNumberSettings');
+ assert.equal(translateOriginalRequest('/api/meta/invoiceNumberSettings',{method:'POST',body:'{"value":{}}'},companyId).path,'/legacy-meta/invoiceNumberSettings');
+ assert.equal(translateOriginalRequest('/api/meta/INV-2026/increment',{method:'POST',body:'{"start":10}'},companyId).path,'/legacy-meta/INV-2026/increment');
  assert.equal(translateOriginalRequest('/api/bills',{method:'GET'},companyId).path,'/legacy-invoice-drafts');
  assert.equal(translateOriginalRequest('/api/bills?overwrite=1',{method:'POST',body:JSON.stringify({id:'INV/1'})},companyId).path,'/legacy-invoice-drafts?overwrite=1');
  for(const path of ['/api/backups/now','/api/update','/api/lock','/api/meta/name'])
