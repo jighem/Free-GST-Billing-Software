@@ -88,6 +88,10 @@ export function translateOriginalRequest(url,options={},companyId) {
   else if(raw.startsWith('clients/'))path='/customers/'+encodeURIComponent(raw.slice(8));
   else if(raw==='products')path='/products';
   else if(raw.startsWith('products/'))path='/products/'+encodeURIComponent(raw.slice(9));
+  else if(raw==='bills' && method==='GET')path='/legacy-invoice-drafts';
+  else if((raw==='bills'||raw==='bills?overwrite=1')&&method==='POST'){
+    path='/legacy-invoice-drafts'+(raw.includes('?')?'?overwrite=1':'');
+  }
   else if((raw==='profile'||raw==='profiles')&&method==='GET')path='/'+raw;
   else {
     // Do not fake a successful response or risk making a legacy write.
