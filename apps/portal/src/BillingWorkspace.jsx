@@ -23,7 +23,7 @@ const navigation = [
 ];
 
 export default function BillingWorkspace({
-  token, tenant, companies, activeCompany, onCompany, onSetup, onWorkspaces, onSignOut
+  token, tenant, companies, activeCompany, onCompany, onSetup, onWorkspaces, onSignOut, onAuthExpired
 }) {
   const [overview, setOverview] = useState(null);
   const [error, setError] = useState('');
@@ -37,10 +37,10 @@ export default function BillingWorkspace({
        + '/companies/' + encodeURIComponent(activeCompany.id) + '/dashboard',
       { token })
       .then(data => { if (active) setOverview(data); })
-      .catch(e => { if (active) setError(e.message); })
+      .catch(e => { if (active) { if (e.status === 401) onAuthExpired(); else setError(e.message); } })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
-  }, [token, tenant.tenant_id, activeCompany.id]);
+  }, [token, tenant.tenant_id, activeCompany.id, onAuthExpired]);
 
   useEffect(() => { setActiveTab('dashboard'); }, [activeCompany.id, tenant.tenant_id]);
 
@@ -95,7 +95,7 @@ export default function BillingWorkspace({
         <span className="billing-chip"><ShieldCheck size={14}/> {tenant.role} · STAGING</span>
       </header>
       <main className="billing-main">
-        {activeTab === 'clients' ? <CustomersModule token={token} tenant={tenant} company={activeCompany} /> : activeTab === 'inventory' ? <ProductsModule token={token} tenant={tenant} company={activeCompany} /> : <>
+        {activeTab === 'clients' ? <CustomersModule token={token} tenant={tenant} company={activeCompany} onAuthExpired={onAuthExpired} /> : activeTab === 'inventory' ? <ProductsModule token={token} tenant={tenant} company={activeCompany} onAuthExpired={onAuthExpired} /> : <>
         <div className="billing-welcome">
           <div><h2>Welcome to {activeCompany.legal_name}</h2>
             <p>Business overview, based on your own company data.</p></div>
