@@ -40,9 +40,9 @@ export default function SaasGate(){
  },[phase,selected]);
  async function logout(){
    const session=readSaasSession();
+   if(session)try{await requestSaas('/auth/logout',{token:session.token,method:'POST'});}catch{/* Network outage: local session still cleared below */}
    clearSaasSession();
    delete window.__anytimeSaasCompanyId;
-   if(session)try{await requestSaas('/auth/logout',{token:session.token});}catch{/* Already logged out locally */}
    window.location.assign('/');
  }
  if(phase==='checking')return <main role="status" style={{padding:32}}>Anytime GST — verifying your login…</main>;
