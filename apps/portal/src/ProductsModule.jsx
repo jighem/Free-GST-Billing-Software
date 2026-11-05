@@ -8,7 +8,7 @@ const inputFields=[
   ['purchasePrice','Purchase Price'],['taxPercent','GST %'],['unit','Unit'],['stock','Opening Stock'],
   ['description','Description'],
 ];
-export default function ProductsModule({tenant,company,token}) {
+export default function ProductsModule({tenant,company,token,onAuthExpired}) {
   const [items,setItems]=useState([]);
   const [form,setForm]=useState(null);
   const [error,setError]=useState('');
@@ -20,7 +20,7 @@ export default function ProductsModule({tenant,company,token}) {
   useEffect(()=>{
     let active=true;setItems([]);setError('');setLoading(true);
     api(path,{token}).then(v=>{if(active)setItems(v);})
-      .catch(e=>{if(active)setError(e.message);})
+      .catch(e=>{if(active){if(e.status===401)onAuthExpired();else setError(e.message);}})
       .finally(()=>{if(active)setLoading(false);});
     return()=>{active=false;};
   },[path,token,refresh]);
@@ -30,7 +30,7 @@ export default function ProductsModule({tenant,company,token}) {
     try{
       await api(path,{token,method:'POST',body:form});
       setForm(null);setRefresh(n=>n+1);
-    }catch(e){setError(e.message);}
+    }catch(e){if(e.status===401)onAuthExpired();else setError(e.message);}
     finally{setBusy(false);}
   }
   async function remove(item) {
@@ -39,7 +39,7 @@ export default function ProductsModule({tenant,company,token}) {
     try{
       await api(path+'/'+encodeURIComponent(item.id),{token,method:'DELETE'});
       setRefresh(n=>n+1);
-    }catch(e){setError(e.message);}
+    }catch(e){if(e.status===401)onAuthExpired();else setError(e.message);}
     finally{setBusy(false);}
   }
   return <section className="billing-products">
