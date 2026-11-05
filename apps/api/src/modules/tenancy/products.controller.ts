@@ -4,7 +4,7 @@ import { PoolClient } from 'pg';
 import { DatabaseService } from '../../db/database.service';
 import { IdentityService } from '../identity/identity.service';
 
-const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const UUID=/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 type ProductRow={id:string;name:string;details:Record<string,unknown>};
 const FIELDS=['kind','hsn','purchasePrice','sellingPrice','rate','taxPercent','unit','stock','description'] as const;
 function parse(input:unknown) {
