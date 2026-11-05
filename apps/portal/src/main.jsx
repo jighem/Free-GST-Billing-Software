@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { ArrowRight, Building2, CheckCircle2, FileText, LockKeyhole, LogOut, Mail, ShieldCheck } from 'lucide-react';
 import { api } from './api.js';
+import { clearSession, loadSession, rememberTenant, saveSession } from './session.js';
 import BillingWorkspace from './BillingWorkspace.jsx';
 import './style.css';
 
@@ -16,7 +17,7 @@ function getVerificationToken() {
 }
 
 function Portal() {
-  const [page, setPage] = useState('login');
+  const [page, setPage] = useState('restoring');
   const [token, setToken] = useState(null); // memory only; never localStorage
   const [memberships, setMemberships] = useState([]);
   const [companies, setCompanies] = useState([]);
@@ -49,9 +50,42 @@ function Portal() {
 
   function navigate(next) { setError(''); setNotice(''); setPage(next); }
   function resetSession() {
+    clearSession();
     setToken(null); setPassword(''); setMemberships([]); setCompanies([]); setSelected(null); setEditing(null); setActiveCompany(null);
     navigate('login');
   }
+
+  useEffect(() => {
+    let cancelled = false;
+    async function restoreSession() {
+      const saved = loadSession();
+      if (!saved) { if (!cancelled) setPage('login'); return; }
+      try {
+        // Validate the stored bearer token server-side before restoring a workspace.
+        const list = await api('/auth/tenants', { token: saved.token });
+        if (cancelled) return;
+        setToken(saved.token);
+        setMemberships(list);
+        const preferred = list.find(x => x.tenant_id === saved.tenantId);
+        if (preferred || list.length === 1) await openTenant(preferred || list[0], saved.token);
+        else setPage('workspaces');
+      } catch (err) {
+        if (cancelled) return;
+        if (err.status === 401 || err.status === 403) {
+          resetSession();
+          setNotice('Your session has expired. Please sign in again.');
+        } else {
+          // Preserve a valid tab session during a temporary API outage.
+          setPage('login');
+          setNotice('Could not restore your workspace. Please check the API connection.');
+        }
+      }
+    }
+    void restoreSession();
+    return () => { cancelled = true; };
+    // Deliberately once on initial mount: the API validates session longevity.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     if (!verificationToken) return;
@@ -69,6 +103,7 @@ function Portal() {
         const list = await api('/auth/tenants', { token: session.access_token });
         setToken(session.access_token);
         setMemberships(list);
+        saveSession(session.access_token, session.expires_in);
         if (list.length === 1) await openTenant(list[0], session.access_token);
         else setPage('workspaces');
       } else if (action === 'register') {
@@ -97,6 +132,7 @@ function Portal() {
       const result = await api('/tenants/' + encodeURIComponent(workspace.tenant_id) + '/companies', { token:accessToken });
       setCompanies(result);
       setSelected(workspace);
+      rememberTenant(workspace.tenant_id);
       setEditing(null);
       setActiveCompany(result.length===1?result[0]:null);
       if (result.length === 1 && !result[0].onboarding_completed_at && ['owner','admin'].includes(workspace.role)) {
@@ -110,6 +146,15 @@ function Portal() {
       setError(err.message);
       if (err.status === 401) resetSession();
     } finally { setBusy(false); }
+  }
+
+  async function signOut() {
+    const currentToken = token;
+    resetSession(); // immediately forget the bearer token in this browser tab
+    if (currentToken) {
+      try { await api('/auth/logout', { method: 'POST', token: currentToken }); }
+      catch { setNotice('Signed out locally. The server could not confirm session revocation.'); }
+    }
   }
 
   function editCompany(company) {
@@ -160,11 +205,11 @@ function Portal() {
     {page==='billing' && token && selected && activeCompany ? <BillingWorkspace
       token={token} tenant={selected} companies={companies} activeCompany={activeCompany}
       onCompany={setActiveCompany} onSetup={editCompany}
-      onWorkspaces={()=>navigate('workspaces')} onSignOut={resetSession}/>
+      onWorkspaces={()=>navigate('workspaces')} onSignOut={signOut}/>
     : <>
     <header className="topbar">
       <div className="brand"><span className="brandicon"><FileText size={22}/></span><span className="brandtext"><strong>Anytime GST</strong><small>Your GST. Anytime. Anywhere.</small></span><span className="staging">STAGING</span></div>
-      {token && <button type="button" className="textbtn" onClick={resetSession}><LogOut size={16}/> Sign out</button>}
+      {token && <button type="button" className="textbtn" onClick={signOut}><LogOut size={16}/> Sign out</button>}
     </header>
     <main className="main">
       <section className="intro">
@@ -179,6 +224,7 @@ function Portal() {
       <section className="panel">
         {error && <div className="message error" role="alert">{error}</div>}
         {notice && <div className="message success" role="status">{notice}</div>}
+        {page === 'restoring' && <><div className="panel-icon"><LockKeyhole/></div><h2>Restoring session</h2><p className="muted" role="status">Checking your existing Anytime GST login…</p></>}
         {page === 'login' && <>
           <div className="panel-icon"><LockKeyhole/></div><h2>Welcome back</h2><p className="muted">Sign in to your Anytime GST workspace.</p>
           <form onSubmit={e => { e.preventDefault(); submit('login'); }}>
