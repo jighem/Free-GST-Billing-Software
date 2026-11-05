@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - 'apps/api/**'
+      - 'apps/portal/**'
       - 'db/**'
       - 'src/**'
       - 'server.js'
@@ -34,6 +35,8 @@ jobs:
       - run: npm run lint
       - run: npm run test:unit
       - run: npm run build
+      - run: npm run test:saas-adapter
+      - run: npm run build:saas
 
   api-build-and-isolation:
     name: API build and PostgreSQL RLS
@@ -70,13 +73,43 @@ jobs:
         working-directory: apps/api
       - run: npm run build
         working-directory: apps/api
+      - run: node --test tests/registration-policy.test.mjs
+        working-directory: apps/api
+      - run: node --test tests/mail-crypto.test.mjs
+        working-directory: apps/api
+      - run: node --test tests/company-setup.test.mjs
+        working-directory: apps/api
+      - run: node --test tests/tenant-uuid-regression.test.mjs
+        working-directory: apps/api
+      - run: node --test tests/legacy-invoice-draft.test.mjs
+        working-directory: apps/api
       - name: Apply migrations and seed disposable CI database
         run: |
           psql -v ON_ERROR_STOP=1 -c "CREATE ROLE gst_app LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOBYPASSRLS PASSWORD 'ci_app_only';"
+          psql -v ON_ERROR_STOP=1 -c "CREATE ROLE gst_auth LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOBYPASSRLS PASSWORD 'ci_auth_only';"
           psql -v ON_ERROR_STOP=1 -f db/migrations/0001_saas_foundation.sql
           psql -v ON_ERROR_STOP=1 -f db/migrations/0002_identity_sessions.sql
           psql -v ON_ERROR_STOP=1 -f db/migrations/0003_subscription_catalog.sql
+          psql -v ON_ERROR_STOP=1 -f db/migrations/0004_registration_onboarding.sql
+          psql -v ON_ERROR_STOP=1 -f db/migrations/0005_registration_security.sql
+          psql -v ON_ERROR_STOP=1 -f db/migrations/0006_registration_mail_outbox.sql
+          psql -v ON_ERROR_STOP=1 -f db/migrations/0007_auth_runtime_scope.sql
+          psql -v ON_ERROR_STOP=1 -f db/migrations/0008_company_setup_permissions.sql
+          psql -v ON_ERROR_STOP=1 -f db/migrations/0009_dashboard_read_permissions.sql
+          psql -v ON_ERROR_STOP=1 -f db/migrations/0010_customer_legacy_contract.sql
+          psql -v ON_ERROR_STOP=1 -f db/migrations/0011_product_catalog.sql
+          psql -v ON_ERROR_STOP=1 -f db/migrations/0012_logout_session_revoke.sql
+          psql -v ON_ERROR_STOP=1 -f db/migrations/0013_legacy_invoice_drafts.sql
+          psql -v ON_ERROR_STOP=1 -f db/migrations/0014_company_meta.sql
+          psql -v ON_ERROR_STOP=1 -f db/tests/ci_registration.sql
           psql -v ON_ERROR_STOP=1 -f db/tests/ci_seed.sql
+          psql -v ON_ERROR_STOP=1 -f db/tests/ci_auth_scope.sql
+          psql -v ON_ERROR_STOP=1 -f db/tests/ci_company_setup.sql
+          psql -v ON_ERROR_STOP=1 -f db/tests/ci_dashboard_rls.sql
+          psql -v ON_ERROR_STOP=1 -f db/tests/ci_customers_rls.sql
+          psql -v ON_ERROR_STOP=1 -f db/tests/ci_products_rls.sql
+          psql -v ON_ERROR_STOP=1 -f db/tests/ci_legacy_invoice_drafts_rls.sql
+          psql -v ON_ERROR_STOP=1 -f db/tests/ci_company_meta_rls.sql
       - name: Verify isolated tenant reads under restricted role
         working-directory: apps/api
         env:
@@ -92,3 +125,29 @@ jobs:
           path: apps/api/package-lock.json
           if-no-files-found: ignore
           retention-days: 7
+
+  saas-portal-build:
+    name: Standalone SaaS portal build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: apps/portal
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-audit --no-fund
+      - name: Build portal for dedicated staging API domain
+        env:
+          VITE_API_BASE_URL: https://staging-api.anytimegst.com/api/v1
+        run: npm run build
+      - run: node --test tests/*.test.mjs
+      - name: Package browser portal for Plesk upload
+        uses: actions/upload-artifact@v4
+        with:
+          name: gst-saas-portal-staging
+          path: apps/portal/dist/
+          if-no-files-found: error
+          retention-days: 14

@@ -12,6 +12,13 @@ export class IdentityController {
     return this.identity.login(body?.email, body?.password);
   }
 
+  @Post('logout')
+  @ApiBearerAuth()
+  async logout(@Headers('authorization') authorization?: string) {
+    await this.identity.logout(authorization);
+    return { signed_out: true };
+  }
+
   @Get('tenants')
   @ApiBearerAuth()
   async tenants(@Headers('authorization') authorization?: string) {

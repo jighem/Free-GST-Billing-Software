@@ -8,7 +8,10 @@
     "build": "nest build",
     "start": "node dist/main.js",
     "typecheck": "tsc --noEmit",
-    "test:rls": "node tests/rls-isolation.mjs"
+    "test:rls": "node tests/rls-isolation.mjs",
+    "test:registration": "npm run build && node --test tests/registration-policy.test.mjs",
+    "test:mail-crypto": "npm run build && node --test tests/mail-crypto.test.mjs",
+    "mail:once": "node dist/workers/registration-mail.worker.js --once"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.0",
@@ -17,12 +20,14 @@
     "@nestjs/swagger": "^11.0.0",
     "pg": "^8.13.0",
     "reflect-metadata": "^0.2.2",
-    "rxjs": "^7.8.1"
+    "rxjs": "^7.8.1",
+    "nodemailer": "^7.0.0"
   },
   "devDependencies": {
     "@nestjs/cli": "^11.0.0",
     "@types/node": "^22.0.0",
     "@types/pg": "^8.11.0",
-    "typescript": "^5.8.0"
+    "typescript": "^5.8.0",
+    "@types/nodemailer": "^7.0.0"
   }
 }
