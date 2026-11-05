@@ -71,3 +71,12 @@ The operating goal is **one Anytime GST product**, not two independent business 
 - `db/tests/ci_customers_rls.sql` tests cross-tenant read/update/delete blocking; GitHub Actions runs this after migration 0010.
 - **Deployment caveat:** previous `deploy/linux/prepare-m3-dashboard.sh` only applies migration 0009. Apply 0010 separately after staging DB backup and before deploying customer CRUD API. Do not activate a new portal release pointing to an API without customers endpoints.
 - **Still outstanding:** the full original invoice, stock, purchases, reports, GST return, print templates and legacy storage adapter migration. A working Clients tab is progress, **not full portal parity**.
+
+
+## Product & service catalogue increment (migration 0011)
+
+- `db/migrations/0011_product_catalog.sql` creates a tenant/company-keyed PostgreSQL product catalogue with FORCE RLS, foreign keys and limited runtime grants.
+- `apps/api/src/modules/tenancy/products.controller.ts` implements authenticated GET, POST and DELETE with legacy `InventoryView.jsx` fields (`name`, `hsn`, `kind`, `purchasePrice`, `sellingPrice`, `rate`, `taxPercent`, `unit`, `stock`, `description`). Server rejects invalid amounts, tax rates, IDs, companies and unauthorised updates.
+- `apps/portal/src/ProductsModule.jsx` implements real company-scoped product/service list and CRUD in staging candidate. The original InventoryView's manufacturing, stock ledger, CSV imports and invoice-linked movements still require migration.
+- `db/tests/ci_products_rls.sql` tests tenant A/B read, update and delete isolation. Staging deployment helper now applies migrations 0009–0011 after backup.
+- **No public cutover** has occurred. All original functional modules beyond clients and the initial product catalogue remain unported.
