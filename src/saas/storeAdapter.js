@@ -31,7 +31,7 @@ export async function requestSaas(path,{method='GET',body,companyId,token}={}) {
   const session=readSaasSession();
   if(!session||!token||token!==session.token) throw new Error('Session expired. Please sign in again.');
   let endpoint;
-  if(path==='/auth/tenants') endpoint=BASE+path;
+  if(path==='/auth/tenants'||path==='/auth/logout') endpoint=BASE+path;
   else if(path==='/companies') endpoint=BASE+'/tenants/'+encodeURIComponent(session.tenantId)+'/companies';
   else endpoint=companyBase(session,companyId)+path;
   const response=await fetch(endpoint,{
