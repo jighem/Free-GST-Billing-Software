@@ -4,6 +4,7 @@ import {
   Package, Plus, RefreshCw, Settings2, ShieldCheck, ShoppingCart, Users, Wallet
 } from 'lucide-react';
 import { api } from './api.js';
+import CustomersModule from './CustomersModule.jsx';
 
 // Navigation and layout groups are retained from the fork's src/App.jsx.
 // Until legacy /api file storage is migrated to tenant-scoped NestJS endpoints,
@@ -11,7 +12,7 @@ import { api } from './api.js';
 const navigation = [
   { id: 'dashboard', label: 'Dashboard', icon: Home, ready: true },
   { id: 'new', label: 'New Invoice', icon: Plus },
-  { id: 'clients', label: 'Clients', icon: Users },
+  { id: 'clients', label: 'Clients', icon: Users, ready: true },
   { id: 'inventory', label: 'Products', icon: Package },
   { id: 'purchases', label: 'Purchases', icon: ShoppingCart },
   { id: 'expenses', label: 'Expenses', icon: Wallet },
@@ -39,6 +40,8 @@ export default function BillingWorkspace({
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
   }, [token, tenant.tenant_id, activeCompany.id]);
+
+  useEffect(() => { setActiveTab('dashboard'); }, [activeCompany.id, tenant.tenant_id]);
 
   const stats = [
     { title:'Total Invoices', value:overview?.metrics.invoices, icon:FileText },
@@ -86,11 +89,12 @@ export default function BillingWorkspace({
 
     <div className="billing-content">
       <header className="billing-topbar">
-        <div><span className="billing-crumb">Business / Dashboard</span>
-          <h1>Dashboard</h1></div>
+        <div><span className="billing-crumb">Business / {activeTab === 'clients' ? 'Clients' : 'Dashboard'}</span>
+          <h1>{activeTab === 'clients' ? 'Clients' : 'Dashboard'}</h1></div>
         <span className="billing-chip"><ShieldCheck size={14}/> {tenant.role} · STAGING</span>
       </header>
       <main className="billing-main">
+        {activeTab === 'clients' ? <CustomersModule token={token} tenant={tenant} company={activeCompany} /> : <>
         <div className="billing-welcome">
           <div><h2>Welcome to {activeCompany.legal_name}</h2>
             <p>Business overview, based on your own company data.</p></div>
@@ -129,7 +133,8 @@ export default function BillingWorkspace({
               </button>}
           </section>
         </div>
-        <p className="billing-preview-notice">Development preview. The forked GST application's billing modules are being connected securely. Creating or editing invoices remains disabled until tenant-scoped APIs are validated. Do not enter real financial data.</p>
+        <p className="billing-preview-notice">Development preview. Client management is available with tenant-isolated PostgreSQL storage. Invoice creation and the other forked modules remain disabled until their complete APIs are migrated and tested. Do not enter real financial data.</p>
+        </>}
       </main>
     </div>
   </div>;
