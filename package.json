@@ -84,6 +84,8 @@
     "dev": "node scripts/bundle-tesseract-assets.mjs && node server.js & vite",
     "dev:win": "node scripts/bundle-tesseract-assets.mjs && (start /b node server.js) && vite",
     "build": "vite build",
+    "build:saas": "vite build --config vite.saas.config.js",
+    "test:saas-adapter": "node --test tests/saas-adapter.test.mjs",
     "start": "vite build && node server.js",
     "lint": "eslint .",
     "preview": "vite preview",
