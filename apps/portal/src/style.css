@@ -57,3 +57,22 @@
 .billing-preview-notice{background:#fff7e5;border:1px solid #f6dda9;color:#83602e;border-radius:10px;padding:13px 18px;font-size:12px;margin-top:23px;line-height:1.65}
 @media(max-width:1050px){.billing-metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.billing-grid{grid-template-columns:1fr}}
 @media(max-width:700px){.billing-shell{flex-direction:column}.billing-sidebar{min-height:auto;width:100%;border-right:0;border-bottom:1px solid #e2e7ef}.billing-brand{padding:13px 18px}.billing-company-picker{padding:12px 18px}.billing-nav{flex-direction:row;overflow:auto;padding:8px}.billing-nav button{width:auto;flex-shrink:0;white-space:nowrap}.billing-side-bottom{display:flex;flex-wrap:wrap}.billing-side-bottom button{width:auto}.billing-topbar{padding:18px}.billing-main{padding:20px 15px}.billing-welcome{display:block}.billing-muted{display:block;margin-top:10px}.billing-metrics{gap:10px}.billing-metric{padding:15px}.billing-metric strong{font-size:25px}}
+
+.billing-page-header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 20px}
+.billing-page-header h2{margin:0 0 5px;font-size:25px}
+.billing-page-header h3{margin:0;font-size:18px}
+.billing-page-header p{color:#718198;margin:0;font-size:13px}
+.billing-action{border:0;border-radius:9px;background:#2563eb;color:white;display:inline-flex;align-items:center;gap:8px;padding:11px 16px;font-weight:700;font-size:13px}
+.billing-action:disabled{opacity:.5}
+.billing-customer-form{background:white;border:1px solid #e2e7ef;border-radius:12px;padding:22px;margin-bottom:20px}
+.billing-form-fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px}
+.billing-form-fields label{display:flex;flex-direction:column;gap:6px;font-size:12px;font-weight:700;color:#354763}
+.billing-form-fields input{width:100%;padding:11px;border:1px solid #dce5ef;border-radius:8px;font:inherit;background:#fbfdff}
+.billing-checkbox{display:flex;gap:8px;align-items:center;font-size:13px;margin:15px 0}
+.billing-table-wrap{overflow:auto}
+.billing-table{border-collapse:collapse;width:100%;min-width:620px;font-size:13px}
+.billing-table th,.billing-table td{text-align:left;padding:13px;border-bottom:1px solid #edf1f6}
+.billing-table th{color:#6b7e97;font-size:11px;text-transform:uppercase;letter-spacing:.3px}
+.billing-table-actions{display:flex;align-items:center;gap:6px}
+.billing-table-actions button{border:1px solid #e1e7f1;border-radius:7px;background:#fff;padding:7px 10px;color:#2859a7;font-weight:650;cursor:pointer}
+@media(max-width:700px){.billing-form-fields{grid-template-columns:1fr}.billing-page-header{align-items:flex-start}}
