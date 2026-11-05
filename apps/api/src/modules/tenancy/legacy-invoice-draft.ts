@@ -5,10 +5,10 @@ export type LegacyDraft = {
  [key:string]:unknown
 };
 const kind:Record<string,string>={
- invoice:'tax_invoice',tax_invoice:'tax_invoice',proforma:'proforma',estimate:'proforma',
- quotation:'proforma',credit_note:'credit_note',creditNote:'credit_note',
- bill_of_supply:'bill_of_supply',billOfSupply:'bill_of_supply',
- delivery_challan:'delivery_challan',deliveryChallan:'delivery_challan'
+ invoice:'tax_invoice',tax_invoice:'tax_invoice','tax-invoice':'tax_invoice',proforma:'proforma',estimate:'proforma',
+ quotation:'proforma',credit_note:'credit_note','credit-note':'credit_note',creditNote:'credit_note',
+ bill_of_supply:'bill_of_supply','bill-of-supply':'bill_of_supply',billOfSupply:'bill_of_supply',
+ delivery_challan:'delivery_challan','delivery-challan':'delivery_challan',deliveryChallan:'delivery_challan'
 };
 export function documentType(invoiceType:string):string|null {return kind[invoiceType]||null;}
 export function financialYear(date:string):string {
