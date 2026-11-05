@@ -18,7 +18,7 @@ const logApiProblem = (options, url, status, message) => {
 };
 
 async function apiFetch(url, options = {}) {
-  if (import.meta.env.VITE_ANYTIME_SAAS_MODE === 'true') {
+  if (import.meta.env?.VITE_ANYTIME_SAAS_MODE === 'true') {
     const session = readSaasSession();
     if (!session) throw new Error('Anytime GST login required.');
     // Selection occurs only after a server-verified membership and company lookup.
