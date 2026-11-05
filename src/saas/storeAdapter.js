@@ -62,8 +62,6 @@ export function translateOriginalRequest(url,options={},companyId) {
   else if(raw.startsWith('clients/'))path='/customers/'+encodeURIComponent(raw.slice(8));
   else if(raw==='products')path='/products';
   else if(raw.startsWith('products/'))path='/products/'+encodeURIComponent(raw.slice(9));
-  else if(raw==='profile' && method==='GET')path='/profile';
-  else if(raw==='profiles' && method==='GET')path='/profiles';
   else {
     // Do not fake a successful response or risk making a legacy write.
     const error=new Error('This original GST module needs its tenant-safe API adapter before use: '+raw.split('/')[0]);
