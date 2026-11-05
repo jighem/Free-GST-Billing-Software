@@ -22,7 +22,7 @@ export default function SaasGate(){
        if(!live)return;
        const completed=list.filter(x=>x.onboarding_completed_at);
        setCompanies(completed);
-       if(completed.length===1){setSelected(completed[0].id);setCompanyName(completed[0].legal_name);setPhase('ready');}
+       if(completed.length===1){window.__anytimeSaasCompanyId=completed[0].id;setSelected(completed[0].id);setCompanyName(completed[0].legal_name);setPhase('ready');}
        else if(completed.length>1)setPhase('choose');
        else {setError('Company setup is required before opening the billing portal.');setPhase('login');}
      }catch(e){
@@ -51,7 +51,7 @@ export default function SaasGate(){
    <a href="/">Return to login and company setup</a></main>;
  if(phase==='choose')return <main style={{padding:32}}><h1>Select a company</h1>
    {companies.map(company=><button key={company.id} type="button" onClick={()=>{
-     setSelected(company.id);setCompanyName(company.legal_name);setPhase('ready');
+     window.__anytimeSaasCompanyId=company.id;setSelected(company.id);setCompanyName(company.legal_name);setPhase('ready');
    }}>{company.legal_name}</button>)}</main>;
  return <><div style={{display:'flex',alignItems:'center',justifyContent:'space-between',gap:12,padding:'9px 18px',background:'#eaf1ff',color:'#142e51',fontSize:13}}>
    <span><strong>Anytime GST</strong> · {companyName} · SaaS integration preview</span>
