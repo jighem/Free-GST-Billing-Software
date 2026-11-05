@@ -12,9 +12,9 @@ SELECT set_config('app.tenant_id','11111111-1111-4111-8111-111111111111',true);
 DO $$
 DECLARE count_a int; count_b int; city_a text;
 BEGIN
- SELECT count(*) INTO count_a FROM customers WHERE company_id='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
- SELECT count(*) INTO count_b FROM customers WHERE company_id='bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
- SELECT profile->>'city' INTO city_a FROM customers WHERE company_id='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+ SELECT count(*) INTO count_a FROM customers WHERE company_id='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa' AND display_name='A customer';
+ SELECT count(*) INTO count_b FROM customers WHERE company_id='bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb' AND display_name='B customer';
+ SELECT profile->>'city' INTO city_a FROM customers WHERE company_id='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa' AND display_name='A customer';
  IF count_a<>1 OR count_b<>0 OR city_a<>'Mumbai'
  THEN RAISE EXCEPTION 'Tenant A client isolation failure'; END IF;
  UPDATE customers SET display_name='A updated' WHERE company_id='bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
@@ -31,7 +31,7 @@ DECLARE count_a int; count_b int; city_b text;
 BEGIN
  SELECT count(*) INTO count_a FROM customers WHERE company_id='aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
  SELECT count(*) INTO count_b FROM customers WHERE company_id='bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
- SELECT profile->>'city' INTO city_b FROM customers WHERE company_id='bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
+ SELECT profile->>'city' INTO city_b FROM customers WHERE company_id='bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb' AND display_name='B customer';
  IF count_a<>0 OR count_b<>1 OR city_b<>'Pune'
  THEN RAISE EXCEPTION 'Tenant B client isolation failure'; END IF;
 END $$;
