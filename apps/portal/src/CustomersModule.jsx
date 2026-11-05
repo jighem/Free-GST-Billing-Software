@@ -6,7 +6,7 @@ import {api} from './api.js';
 // The original fork's client table/statement UI remains for subsequent reuse,
 // after all dependencies on src/store.js are migrated.
 const blank={name:'',address:'',city:'',pin:'',state:'',gstin:'',email:'',phone:'',country:'India',isSEZ:false};
-export default function CustomersModule({tenant,company,token}) {
+export default function CustomersModule({tenant,company,token,onAuthExpired}) {
   const [customers,setCustomers]=useState([]);
   const [form,setForm]=useState(null);
   const [busy,setBusy]=useState(false);
@@ -17,7 +17,7 @@ export default function CustomersModule({tenant,company,token}) {
     let active=true;setLoading(true);setError('');setCustomers([]);
     api('/tenants/'+encodeURIComponent(tenant.tenant_id)+'/companies/'+encodeURIComponent(company.id)+'/customers',{token})
       .then(data=>{if(active)setCustomers(data);})
-      .catch(err=>{if(active)setError(err.message);})
+      .catch(err=>{if(active){if(err.status===401)onAuthExpired();else setError(err.message);}})
       .finally(()=>{if(active)setLoading(false);});
     return()=>{active=false;};
   },[tenant.tenant_id,company.id,token,refresh]);
@@ -31,7 +31,7 @@ export default function CustomersModule({tenant,company,token}) {
     try {
       await api(path,{token,method:'POST',body:form});
       setForm(null);setRefresh(x=>x+1);
-    } catch(e){setError(e.message);}
+    } catch(e){if(e.status===401)onAuthExpired();else setError(e.message);}
     finally{setBusy(false);}
   }
   async function remove(customer) {
@@ -40,7 +40,7 @@ export default function CustomersModule({tenant,company,token}) {
     try {
       await api(path+'/'+encodeURIComponent(customer.id),{token,method:'DELETE'});
       setRefresh(x=>x+1);
-    }catch(e){setError(e.message);}
+    }catch(e){if(e.status===401)onAuthExpired();else setError(e.message);}
     finally{setBusy(false);}
   }
   return <section className="billing-customers">
