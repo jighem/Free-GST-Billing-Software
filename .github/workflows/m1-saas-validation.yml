@@ -100,6 +100,7 @@ jobs:
           psql -v ON_ERROR_STOP=1 -f db/migrations/0011_product_catalog.sql
           psql -v ON_ERROR_STOP=1 -f db/migrations/0012_logout_session_revoke.sql
           psql -v ON_ERROR_STOP=1 -f db/migrations/0013_legacy_invoice_drafts.sql
+          psql -v ON_ERROR_STOP=1 -f db/migrations/0014_company_meta.sql
           psql -v ON_ERROR_STOP=1 -f db/tests/ci_registration.sql
           psql -v ON_ERROR_STOP=1 -f db/tests/ci_seed.sql
           psql -v ON_ERROR_STOP=1 -f db/tests/ci_auth_scope.sql
