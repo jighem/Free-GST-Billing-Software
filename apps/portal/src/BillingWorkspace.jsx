@@ -40,7 +40,7 @@ export default function BillingWorkspace({
       .catch(e => { if (active) { if (e.status === 401) onAuthExpired(); else setError(e.message); } })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
-  }, [token, tenant.tenant_id, activeCompany.id, onAuthExpired]);
+  }, [token, tenant.tenant_id, activeCompany.id]);
 
   useEffect(() => { setActiveTab('dashboard'); }, [activeCompany.id, tenant.tenant_id]);
 
