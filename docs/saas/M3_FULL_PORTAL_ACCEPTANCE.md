@@ -61,3 +61,13 @@ Foundation already done → **shared auth-aware original-app shell and storage c
 - Full original UI / API contract migration: **outstanding**. Do not promise it is ready merely because CI for read-only dashboard passes.
 
 The operating goal is **one Anytime GST product**, not two independent business applications.
+
+
+## M3 implementation increment: authenticated clients (migration 0010)
+
+- `apps/api/src/modules/tenancy/customers.controller.ts` implements `GET /tenants/:tenantId/companies/:companyId/customers`, `POST` to insert/update, and `DELETE /:customerId`. It adapts the original `src/store.js` client fields and uses company-scoped queries inside PostgreSQL FORCE RLS transactions.
+- `db/migrations/0010_customer_legacy_contract.sql` adds JSONB `profile` to the existing customers table for backwards-compatible fields and least-privilege customer read/write grants. Do not run it on the original file-based deployment.
+- `apps/portal/src/CustomersModule.jsx` provides real clients list and CRUD in the authenticated workspace as an interim integration. The complete original `ClientsView.jsx` remains to be reused after invoice statement dependencies are migrated.
+- `db/tests/ci_customers_rls.sql` tests cross-tenant read/update/delete blocking; GitHub Actions runs this after migration 0010.
+- **Deployment caveat:** previous `deploy/linux/prepare-m3-dashboard.sh` only applies migration 0009. Apply 0010 separately after staging DB backup and before deploying customer CRUD API. Do not activate a new portal release pointing to an API without customers endpoints.
+- **Still outstanding:** the full original invoice, stock, purchases, reports, GST return, print templates and legacy storage adapter migration. A working Clients tab is progress, **not full portal parity**.
