@@ -16,6 +16,8 @@ BACKUPS=/root/gst-saas-secrets/backups
 [ "$(id -u)" -eq 0 ] || { echo 'Run as root via Linux SSH'; exit 1; }
 [ -f "$SRC/db/migrations/0009_dashboard_read_permissions.sql" ] ||
   { echo 'M3 source not pulled from GitHub'; exit 1; }
+[ -f "$SRC/db/migrations/0010_customer_legacy_contract.sql" ] ||
+  { echo 'Customer migration missing'; exit 1; }
 [ -f "$SRC/apps/portal/src/BillingWorkspace.jsx" ] ||
   { echo 'M3 portal source missing'; exit 1; }
 [ -f /root/gst-saas-secrets/db-roles.env ] ||
@@ -43,6 +45,10 @@ test -s "$BACKUP"
 echo '=== APPLY LEAST-PRIVILEGE M3 MIGRATION ==='
 docker exec -i "$DB" psql -U postgres -d "$DBNAME" -v ON_ERROR_STOP=1 \
   < "$SRC/db/migrations/0009_dashboard_read_permissions.sql"
+
+echo '=== APPLY CUSTOMER LEGACY STORAGE MIGRATION ==='
+docker exec -i "$DB" psql -U postgres -d "$DBNAME" -v ON_ERROR_STOP=1 \
+  < "$SRC/db/migrations/0010_customer_legacy_contract.sql"
 
 echo '=== VERIFY DATABASE READ PERMISSIONS ==='
 docker exec "$DB" psql -U postgres -d "$DBNAME" -v ON_ERROR_STOP=1 -Atc "
