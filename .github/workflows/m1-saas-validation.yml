@@ -35,6 +35,8 @@ jobs:
       - run: npm run lint
       - run: npm run test:unit
       - run: npm run build
+      - run: npm run test:saas-adapter
+      - run: npm run build:saas
 
   api-build-and-isolation:
     name: API build and PostgreSQL RLS
