@@ -8,6 +8,7 @@ import { BillingDashboardController } from './modules/tenancy/billing-dashboard.
 import { CustomersController } from './modules/tenancy/customers.controller';
 import { ProductsController } from './modules/tenancy/products.controller';
 import { LegacyInvoiceDraftsController } from './modules/tenancy/legacy-invoice-drafts.controller';
+import { LegacyMetaController } from './modules/tenancy/legacy-meta.controller';
 import { RegistrationController } from './modules/onboarding/registration.controller';
 import { RegistrationService } from './modules/onboarding/registration.service';
 
@@ -16,7 +17,7 @@ const registrationEnabled = process.env.ENABLE_REGISTRATION === '1';
 
 @Module({
   controllers: [
-    HealthController, IdentityController, CompaniesController, BillingDashboardController, CustomersController, ProductsController, LegacyInvoiceDraftsController,
+    HealthController, IdentityController, CompaniesController, BillingDashboardController, CustomersController, ProductsController, LegacyInvoiceDraftsController, LegacyMetaController,
     ...(registrationEnabled ? [RegistrationController] : []),
   ],
   providers: [
