@@ -90,11 +90,13 @@ jobs:
           psql -v ON_ERROR_STOP=1 -f db/migrations/0007_auth_runtime_scope.sql
           psql -v ON_ERROR_STOP=1 -f db/migrations/0008_company_setup_permissions.sql
           psql -v ON_ERROR_STOP=1 -f db/migrations/0009_dashboard_read_permissions.sql
+          psql -v ON_ERROR_STOP=1 -f db/migrations/0010_customer_legacy_contract.sql
           psql -v ON_ERROR_STOP=1 -f db/tests/ci_registration.sql
           psql -v ON_ERROR_STOP=1 -f db/tests/ci_seed.sql
           psql -v ON_ERROR_STOP=1 -f db/tests/ci_auth_scope.sql
           psql -v ON_ERROR_STOP=1 -f db/tests/ci_company_setup.sql
           psql -v ON_ERROR_STOP=1 -f db/tests/ci_dashboard_rls.sql
+          psql -v ON_ERROR_STOP=1 -f db/tests/ci_customers_rls.sql
       - name: Verify isolated tenant reads under restricted role
         working-directory: apps/api
         env:
