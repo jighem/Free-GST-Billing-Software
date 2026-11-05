@@ -37,6 +37,15 @@ export class IdentityService {
     return session[0].user_id;
   }
 
+  async logout(header: string | undefined): Promise<void> {
+    // Only revoke an authenticated session belonging to this exact bearer.
+    await this.authenticate(header);
+    const token = /^Bearer ([A-Za-z0-9_-]{40,128})$/.exec(header || '')?.[1];
+    if (!token) throw new UnauthorizedException();
+    const digest = createHash('sha256').update(token).digest('hex');
+    await this.db.identityQuery('DELETE FROM user_sessions WHERE token_hash = $1', [digest]);
+  }
+
   async memberships(userId: string): Promise<Membership[]> {
     return this.db.withAuthenticatedUser(userId, async client => {
       const result = await client.query<Membership>(
